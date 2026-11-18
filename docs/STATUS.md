@@ -13,6 +13,7 @@
 - Next.js **Cache Components turned off** (`next.config.mjs`): the template enables it, but it makes every cookie-reading page need a `<Suspense>` boundary. The classic model is simpler for a 3-day build.
 - Next.js 16 renamed middleware to **`proxy.js`**; it only refreshes the Supabase session. Authorization is done on pages and by RLS.
 - Env var names follow the current Supabase dashboard: `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY` (the anon/publishable key) and `SUPABASE_SECRET_KEY` (server only).
+- Data model decisions D1–D4 (18 Nov): sign-up offers customer or pharmacy owner, but the role is written by the database; licence photos in a private bucket; location from the browser or an area picker, 5 km radius; **one reservation = one shop, many medicines, one pickup code** (new `reservation_items` table). Details in `docs/data-model.md`.
 - Agentic tooling: Prettier PostToolUse hook; skills `grill-me`/`grilling`, `supabase` + `supabase-postgres-best-practices` + project `review-supabase-model`, `vercel-react-best-practices` + project `review-react-ui`; subagents `code-reviewer`, `security-reviewer`, `requirements-reviewer`; Playwright MCP.
 
 ## Progress
@@ -30,10 +31,4 @@
 
 ## Next task
 
-Start M1 (schema, RLS, stock functions, seed) on branch `feature/m1-schema`: first a `/grill-me` session on the data model and the open questions below, then write the decisions into `docs/data-model.md` before any migration.
-
-Open questions for M1:
-- How a user becomes a pharmacist or admin (role assignment without letting users set their own role).
-- Licence photo storage bucket and who can read it.
-- Search radius value, and where the customer's location comes from (browser geolocation, or area picker as fallback).
-- Whether `reservations` allows quantity > 1.
+Start M1 (schema, RLS, stock functions, seed) on branch `feature/m1-schema`. The open data-model questions are answered (decisions D1–D4 in `docs/data-model.md`, confirmed 18 Nov 2026 without a grill-me session), so M1 can go straight to migrations, reviewed with `review-supabase-model` + `supabase-postgres-best-practices`.

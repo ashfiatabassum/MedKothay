@@ -70,9 +70,14 @@ mobile app.
 
 ### Build these
 
+**Sign-up**
+- One email magic-link sign-in page with two choices: "I'm looking for medicine"
+  (customer) and "I own a pharmacy" (goes on to the pharmacy registration form)
+- Admin is never offered; it is set once by hand with SQL
+
 **Pharmacy**
-- Register: shop name, address, lat/lng, phone, DGDA licence number, licence
-  photo, licence expiry date
+- Register: shop name, address, area, lat/lng, phone, DGDA licence number,
+  licence photo, licence expiry date
 - Status is `pending` until an admin approves; pending shops are invisible to customers
 - Inventory: add a medicine from the catalog with quantity, selling price, expiry date
 - Edit and adjust stock
@@ -87,7 +92,9 @@ mobile app.
 - Search a medicine, see nearby shops that have it, sorted by distance
 - Each result: stock status, price, distance, verified badge, prescription-only badge
 - Sign in to reserve (email magic link)
-- Reserve with a 30-minute hold and a pickup code
+- Location from the browser, or an area picker if the customer declines
+- Per-shop basket: add several medicines from the same shop, then reserve them
+  together as **one reservation** with one 30-minute hold and one pickup code
 - Cancel a reservation
 - See own reservations with their status
 
@@ -167,16 +174,21 @@ pharmacy_stock                  -- one row per medicine per pharmacy
   updated_at        timestamptz
   UNIQUE (pharmacy_id, medicine_id)
 
-reservations
+reservations                    -- one per basket: one shop, one pickup code
   id                uuid PK
   pharmacy_id       uuid references pharmacies
-  medicine_id       uuid references medicines
   customer_id       uuid references profiles
-  quantity          integer
   pickup_code       text        -- 6 digits
   status            text        -- 'active' | 'collected' | 'cancelled' | 'expired'
   expires_at        timestamptz -- created_at + 30 minutes
   created_at        timestamptz
+
+reservation_items               -- the medicines in a reservation
+  id                uuid PK
+  reservation_id    uuid references reservations
+  medicine_id       uuid references medicines
+  quantity          integer     -- 1 to 5
+  UNIQUE (reservation_id, medicine_id)
 
 sales                           -- counter sales
   id                uuid PK
@@ -212,14 +224,23 @@ This is what customers see and what the counter may sell. Never let it go negati
 - Customers never see purchase price (we do not store one)
 
 **Reservation**
+- One reservation = one shop, one or more medicines (1 to 5 units each), one
+  pickup code, one status. A basket can never mix shops.
 - Holding for 30 minutes from creation
 - A 6-digit pickup code is generated on creation
-- Creating a reservation increases `held_quantity`; it does not change `quantity`
-- Collection decreases both `quantity` and `held_quantity`
-- Cancellation or expiry decreases `held_quantity` only
-- A reservation may only be created if `available_quantity >= requested quantity`
+- Creating a reservation increases `held_quantity` for every item; it does not
+  change `quantity`
+- **All or nothing:** it is created only if every item has
+  `available_quantity >= requested quantity`. Otherwise nothing is held and the
+  customer is told which item is short.
+- Collection applies to the whole reservation: for every item, decrease both
+  `quantity` and `held_quantity`. No partial pickup.
+- Cancellation or expiry applies to the whole reservation: decrease
+  `held_quantity` only
 - If two customers reserve the last unit at the same moment, exactly one succeeds.
   Enforce this in the Postgres function with `SELECT ... FOR UPDATE`, not in JavaScript.
+  Lock all of a reservation's stock rows **in a fixed order (by `medicine_id`)**
+  so two overlapping baskets cannot deadlock.
 - Expiry is checked lazily: treat a reservation as expired when `expires_at` has
   passed. Do not write a cron job.
 
@@ -237,8 +258,9 @@ This is what customers see and what the counter may sell. Never let it go negati
 **Search**
 - Match on both brand name and generic name
 - Sort results by distance ascending
-- Show shops within a sensible radius; if none, say so rather than showing an
-  empty page
+- Location: browser geolocation, or the centre of an area the customer picks
+- Radius 5 km. If no shop within it has the medicine, say so and show the
+  nearest shops further away, clearly labelled as outside 5 km
 
 ---
 
@@ -258,6 +280,17 @@ a city and avoids an extension.
 | customer | The above, plus create and cancel own reservations |
 | pharmacist | Manage own pharmacy's stock, sales and reservations only |
 | admin | Approve or reject pharmacies, manage the medicine catalog |
+
+**How roles are assigned.** Every new user gets `role = 'customer'` from a
+database trigger. Submitting the pharmacy registration form calls a Postgres
+function that creates the `pending` pharmacy and sets the caller's `role` to
+`pharmacist` and `pharmacy_id` in one transaction. The browser never sends a role.
+Users can never update their own `role` or `pharmacy_id`. The admin role is set
+once by hand with SQL.
+
+**Licence photos** live in a private Storage bucket. Only the shop's own
+pharmacist (upload, read) and admins (read) can access them. Images only (JPEG,
+PNG, WebP), max 5 MB.
 
 RLS must enforce that a pharmacist can only read and write rows where
 `pharmacy_id` matches the `pharmacy_id` on their profile. Do not rely on the UI
@@ -293,7 +326,8 @@ This must work end to end before anything else is added:
 2. An admin approves it
 3. The pharmacy adds stock
 4. A customer searches a medicine and sees that shop, sorted by distance
-5. The customer reserves one unit and gets a pickup code
+5. The customer reserves one or more medicines from that shop in one basket and
+   gets a pickup code
 6. The pharmacist sees the reservation and cannot sell that unit at the counter
 7. The pharmacist marks it collected and the stock drops
 

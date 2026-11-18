@@ -17,17 +17,21 @@ Deadline: 3 days from 18 November 2026. Each milestone is one branch (`feature/m
 
 ## M1: Schema, RLS, stock functions, seed
 
-- [ ] Migrations for all tables in `CLAUDE.md` "Data model", with CHECK constraints and indexes
-- [ ] `profiles` row created on sign-up (role `customer`); role and `pharmacy_id` not user-editable
-- [ ] RLS policies for every table; public stock band read for approved shops only
-- [ ] Functions: `search_medicine`, `reserve_stock`, `cancel_reservation`, `collect_reservation`, `complete_sale`, lazy expiry
-- [ ] Seed: ~100 Bangladeshi medicines, 6-8 Dhaka pharmacies (one pending), varied stock
+Decisions D1–D4 are confirmed in `docs/data-model.md` (role choice at sign-up; private licence bucket; geolocation or area picker with 5 km radius; multi-medicine reservations).
 
-**Done when:** advisors clean; SQL tests per role pass, including the two-customers-last-unit race (exactly one succeeds) and a sale blocked by holds; `docs/data-model.md` matches the migrations.
+- [ ] Migrations for all tables in `CLAUDE.md` "Data model" (including `reservation_items`), with CHECK constraints and indexes
+- [ ] `profiles` row created on sign-up (role `customer`); role and `pharmacy_id` not user-editable
+- [ ] `register_pharmacy` function: creates the `pending` shop and makes the caller its pharmacist in one transaction (D1)
+- [ ] Private `licences` Storage bucket with owner/admin policies (D2)
+- [ ] RLS policies for every table; public stock band read for approved shops only; item tables scoped through their parent
+- [ ] Functions: `search_medicine` (5 km + nearest-outside fallback), `reserve` (basket, all or nothing, lock order by `medicine_id`), `cancel_reservation`, `collect_reservation` (pickup code), `complete_sale`, lazy expiry
+- [ ] Seed: ~100 Bangladeshi medicines, 6-8 Dhaka pharmacies (one pending), varied stock, area centre points
+
+**Done when:** advisors clean; SQL tests per role pass, including: two customers racing for the last unit (exactly one succeeds); a basket where one item is short (nothing held, short item named); two overlapping baskets at once (no deadlock); a sale blocked by holds; a user cannot set their own role; `docs/data-model.md` matches the migrations.
 
 ## M2: Auth and pharmacy registration
 
-- [ ] Email magic link sign-in and sign-out; auth callback with same-site redirect only
+- [ ] Sign-in page with two choices ("I'm looking for medicine" / "I own a pharmacy"); email magic link; sign-out; auth callback with same-site redirect only
 - [ ] Pharmacy registration form (shop details, licence number, photo upload to a private bucket, expiry) → `pending`
 - [ ] Role-based redirects for `(customer)`, `(pharmacy)`, `(admin)`
 
@@ -43,12 +47,14 @@ Deadline: 3 days from 18 November 2026. Each milestone is one branch (`feature/m
 
 ## M5: Customer search and reservation
 
-- [ ] Search by brand or generic, nearby approved shops sorted by distance, bands and badges, "none nearby" message
-- [ ] Reserve with 30-minute hold and pickup code; cancel; my reservations with status
+- [ ] Location from the browser or an area picker
+- [ ] Search by brand or generic, approved shops within 5 km sorted by distance, bands and badges; "none within 5 km" message with nearest shops further away
+- [ ] Per-shop basket (add several medicines, 1–5 each; adding from another shop starts a new basket)
+- [ ] Reserve the basket: one 30-minute hold and one pickup code; short-item error names the medicine; cancel; my reservations with items and status
 
 ## M6: Pharmacy reservations and dashboard
 
-- [ ] Incoming reservations with countdown; mark collected with pickup code
+- [ ] Incoming reservations with their items and a countdown; mark the whole reservation collected with the pickup code
 - [ ] Dashboard: today's sales, low stock count, active reservations
 
 ## M7: Demo loop and hand-in
