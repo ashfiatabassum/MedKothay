@@ -1,6 +1,7 @@
 // Sign in | Create account (CLAUDE.md "Accounts", D5). The tab is in the URL
 // (?mode=signup) so links like "Register your pharmacy" can open the right one.
 import Link from "next/link";
+import { safeNextPath } from "@/lib/data/session";
 import { cn } from "@/lib/utils";
 import { SignInForm } from "./sign-in-form";
 import { SignUpForm } from "./sign-up-form";
@@ -29,8 +30,13 @@ function Tab({ href, current, children }) {
 }
 
 export default async function SignInPage({ searchParams }) {
-  const { mode, as } = await searchParams;
+  const { mode, as, next: rawNext } = await searchParams;
   const signUp = mode === "signup";
+  const next = safeNextPath(rawNext);
+  // Keep the return path (e.g. /basket) when switching between the two tabs.
+  const nextQs = next ? `next=${encodeURIComponent(next)}` : "";
+  const signInHref = nextQs ? `/sign-in?${nextQs}` : "/sign-in";
+  const signUpHref = `/sign-in?mode=signup${as === "pharmacy" ? "&as=pharmacy" : ""}${nextQs ? `&${nextQs}` : ""}`;
   const defaultType = as === "pharmacy" ? "pharmacy" : "customer";
 
   return (
@@ -48,21 +54,23 @@ export default async function SignInPage({ searchParams }) {
         aria-label="Sign in or create account"
         className="mb-6 flex gap-1 rounded-lg bg-muted p-1"
       >
-        <Tab href="/sign-in" current={!signUp}>
+        <Tab href={signInHref} current={!signUp}>
           Sign in
         </Tab>
-        <Tab
-          href={`/sign-in?mode=signup${as === "pharmacy" ? "&as=pharmacy" : ""}`}
-          current={signUp}
-        >
+        <Tab href={signUpHref} current={signUp}>
           Create account
         </Tab>
       </nav>
 
       {signUp ? (
-        <SignUpForm key={defaultType} defaultType={defaultType} />
+        <SignUpForm
+          key={defaultType}
+          defaultType={defaultType}
+          next={next}
+          signInHref={signInHref}
+        />
       ) : (
-        <SignInForm />
+        <SignInForm next={next} signUpHref={signUpHref} />
       )}
     </div>
   );

@@ -1,8 +1,9 @@
-// Home. U2 adds the search box and results here.
+// Home: the search box lives in the blue box (no separate "Search" header link).
 import Link from "next/link";
 import { MapPin, ShoppingBasket, Store, Ticket } from "lucide-react";
 import { buttonVariants } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
+import { SearchForm } from "@/components/search/search-form";
 import { HOLD_MINUTES } from "@/lib/constants";
 import { cn } from "@/lib/utils";
 
@@ -35,8 +36,8 @@ export default function Home() {
           See which nearby shop actually has it in stock, reserve it, and pick
           it up. No more going shop to shop.
         </p>
-        <div className="mt-6 rounded-xl bg-card p-4 text-sm text-muted-foreground">
-          Medicine search arrives in the next step (U2).
+        <div className="mt-6">
+          <SearchForm variant="hero" />
         </div>
       </section>
 

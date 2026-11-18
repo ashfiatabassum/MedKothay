@@ -1,7 +1,7 @@
 // Status badges. Every badge has text, not only colour (CLAUDE.md "Theme").
 import { BadgeCheck, FileText } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
-import { STOCK_BAND_LABELS } from "@/lib/constants";
+import { RESERVATION_STATUS_LABELS, STOCK_BAND_LABELS } from "@/lib/constants";
 import { cn } from "@/lib/utils";
 
 const BAND_CLASSES = {
@@ -41,6 +41,28 @@ export function RxBadge({ className }) {
     >
       <FileText aria-hidden="true" />
       Rx only
+    </Badge>
+  );
+}
+
+const RESERVATION_CLASSES = {
+  active: "bg-highlight-soft text-highlight-foreground",
+  collected: "bg-in-stock text-in-stock-foreground",
+  cancelled: "bg-out-of-stock text-out-of-stock-foreground",
+  expired: "bg-out-of-stock text-out-of-stock-foreground",
+};
+
+/** status: "active" | "collected" | "cancelled" | "expired" */
+export function ReservationStatusBadge({ status, className }) {
+  return (
+    <Badge
+      className={cn(
+        "border-transparent",
+        RESERVATION_CLASSES[status],
+        className,
+      )}
+    >
+      {RESERVATION_STATUS_LABELS[status]}
     </Badge>
   );
 }

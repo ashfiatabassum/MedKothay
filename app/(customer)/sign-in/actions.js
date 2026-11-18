@@ -3,7 +3,9 @@
 // Sign in and create account (CLAUDE.md "Accounts", decision D5).
 // Validation happens here, on the server. The account type is only ever
 // "customer" or "pharmacy"; the database maps it to a role in W1.
+import { redirect } from "next/navigation";
 import { signInWithPassword, signUp } from "@/lib/data/auth";
+import { endDemoSession, safeNextPath } from "@/lib/data/session";
 import {
   checkEmail,
   checkFullName,
@@ -35,12 +37,10 @@ export async function signInAction(_prev, formData) {
   if (!result.ok) {
     return { status: "error", formError: result.error, values: { email } };
   }
-  // TODO(W1): redirect(result.redirectTo) once a real session exists.
-  return {
-    status: "signed-in",
-    fullName: result.fullName,
-    redirectTo: result.redirectTo,
-  };
+  // Customers may return to where they were (e.g. the basket); other account
+  // types always go to their own area.
+  const next = safeNextPath(formData.get("next"));
+  redirect(result.role === "customer" && next ? next : result.redirectTo);
 }
 
 export async function signUpAction(_prev, formData) {
@@ -83,4 +83,9 @@ export async function signUpAction(_prev, formData) {
   }
   // TODO(W1): redirect(result.redirectTo) once a real session exists.
   return { status: "created", accountType, redirectTo: result.redirectTo };
+}
+
+export async function signOutAction() {
+  await endDemoSession();
+  redirect("/");
 }

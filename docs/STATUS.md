@@ -1,7 +1,7 @@
 # Project status and next handoff
 
 **Updated:** 18 November 2026
-**Phase:** M0 and U1 complete (U1 live, PR #1). **U1b (header and email + password accounts UI, from developer feedback) built and verified on `feature/u1b-auth-ui`; pull request open.** Next: U2 (customer screens).
+**Phase:** M0, U1, U1b complete and live. **U2 (customer screens) built and verified on `feature/u2-customer`; pull request open.** Next: U3 (pharmacy screens).
 
 - Live: https://med-kothay.vercel.app (auto-deploys from `main`)
 - Repo: https://github.com/ashfiatabassum/MedKothay (public)
@@ -15,6 +15,7 @@
 - Env var names follow the current Supabase dashboard: `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY` (the anon/publishable key) and `SUPABASE_SECRET_KEY` (server only).
 - Build order (18 Nov): **UI first on sample data (U1–U4), then backend (B1), then wiring (W1–W3)**, at the developer's request. Accepted cost: about half a day of wiring work, and the stock logic is built later. Mitigation: `lib/data/` functions return data in the same shape the Postgres functions will.
 - Accounts (18 Nov, D5): email + password; one email = one account = one type (customer or pharmacy); pharmacy accounts cannot reserve; neutral auth messages; email confirmation off; no password reset for now. Header shows only logo + Sign in when signed out.
+- Demo session (U2, until W1): signing in with a sample account sets an httpOnly cookie holding only the role (`customer`/`pharmacist`/`admin`) of a fixed sample profile, so sign-in/out, Reserve and the role gates can be tried. It grants access to sample data only and is removed in W1.
 - Theme (18 Nov): white and deep blue `#0B5CAD`, blue-white background, amber accent for pickup code and countdown (`CLAUDE.md` "Theme").
 - Data model decisions D1–D4 (18 Nov): sign-up offers customer or pharmacy owner, but the role is written by the database; licence photos in a private bucket; location from the browser or an area picker, 5 km radius; **one reservation = one shop, many medicines, one pickup code** (new `reservation_items` table). Details in `docs/data-model.md`.
 - Agentic tooling: Prettier PostToolUse hook; skills `grill-me`/`grilling`, `supabase` + `supabase-postgres-best-practices` + project `review-supabase-model`, `vercel-react-best-practices` + project `review-react-ui`; subagents `code-reviewer`, `security-reviewer`, `requirements-reviewer`; Playwright MCP.
@@ -25,8 +26,8 @@
 | --- | :---: | :---: | :---: | --- |
 | M0 setup | Yes | Yes | Yes | Build/lint pass; health ok locally and on Vercel; hook fired in a real edit; Playwright MCP opened the live site |
 | U1 UI foundation | Yes | Yes | Yes | Merged PR #1 (`c6ab437`); Playwright 3 runs, 2 skills, code-reviewer |
-| U1b header and accounts UI | Yes | Yes | Yes | PR open; Playwright 2 runs, review-react-ui, code-reviewer, security-reviewer |
-| U2 customer screens | Yes | No | No | |
+| U1b header and accounts UI | Yes | Yes | Yes | Merged PR #2 (`34d1f42`); Playwright 2 runs, review-react-ui, code-reviewer, security-reviewer |
+| U2 customer screens | Yes | Yes | Yes | PR open; Playwright 2 runs; review-react-ui, vercel-react-best-practices; code, security and requirements reviewers. Sample data: new reservations and cancels are **not saved** until W3 |
 | U3 pharmacy screens | Yes | No | No | |
 | U4 admin screens | Yes | No | No | |
 | B1 schema, RLS, functions, seed | Yes | No | No | |
@@ -37,6 +38,6 @@
 
 ## Next task
 
-Start **U2 (customer screens)** on `feature/u2-customer` from an up-to-date `main`. Use `searchMedicine` (`needsLocation` when no location yet) and `getMyReservations` (`expiresAt` only for active) from `lib/data/customer.js`; replace the `/basket` and `/reservations` placeholders and the "search arrives in U2" note on the home page. See `plan.md` "Rules for the UI-first phase".
+Start **U3 (pharmacy screens)** on `feature/u3-pharmacy` from an up-to-date `main`, after the U2 PR is merged. Decide the pharmacy registration fields with the developer first (deferred in D5). Sign in as `pharmacy@medkothay.test` / `demo-password` to reach `/pharmacy` (the layout now redirects other roles). Add `lib/data/pharmacy.js` (pharmacist sees exact quantities for their own shop only).
 
 Order: U1 → U2 → U3 → U4 → B1 (backend) → W1–W3 (wire up) → F. Data-model decisions D1–D4 are already confirmed (`docs/data-model.md`).
