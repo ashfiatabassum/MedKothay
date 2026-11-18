@@ -1,30 +1,86 @@
 "use server";
 
-// Sign-in with an email magic link. The chosen role ("customer" | "pharmacy")
-// only decides where the user goes after signing in; the database sets the real
-// role (CLAUDE.md "How roles are assigned"). Never trust it as a role.
+// Sign in and create account (CLAUDE.md "Accounts", decision D5).
+// Validation happens here, on the server. The account type is only ever
+// "customer" or "pharmacy"; the database maps it to a role in W1.
+import { signInWithPassword, signUp } from "@/lib/data/auth";
+import {
+  checkEmail,
+  checkFullName,
+  checkPassword,
+  normalizeBdPhone,
+} from "@/lib/validation";
 
-const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-const INTENTS = new Set(["customer", "pharmacy"]);
+const ACCOUNT_TYPES = new Set(["customer", "pharmacy"]);
 
-export async function requestSignInLink(_prevState, formData) {
-  const email = String(formData.get("email") ?? "").trim();
-  const intent = String(formData.get("intent") ?? "");
+function field(formData, name) {
+  return String(formData.get(name) ?? "").trim();
+}
+
+export async function signInAction(_prev, formData) {
+  const email = field(formData, "email");
+  // Passwords are not trimmed: spaces may be part of them.
+  const password = String(formData.get("password") ?? "");
 
   const fieldErrors = {};
-  if (!INTENTS.has(intent))
-    fieldErrors.intent = "Choose how you will use MedKothay.";
-  if (!email) fieldErrors.email = "Enter your email address.";
-  else if (!EMAIL_RE.test(email) || email.length > 254)
-    fieldErrors.email = "Enter a valid email address, like name@example.com.";
-
-  if (Object.keys(fieldErrors).length > 0) {
-    return { status: "error", fieldErrors, values: { email, intent } };
+  const emailError = checkEmail(email);
+  if (emailError) fieldErrors.email = emailError;
+  const passwordError = checkPassword(password);
+  if (passwordError) fieldErrors.password = passwordError;
+  if (Object.keys(fieldErrors).length) {
+    return { status: "error", fieldErrors, values: { email } };
   }
 
-  // TODO(W1): supabase.auth.signInWithOtp({ email, options: { emailRedirectTo:
-  //   `${origin}/auth/callback?next=${intent === "pharmacy" ? "/pharmacy/register" : "/"}` } })
-  await new Promise((r) => setTimeout(r, 400));
+  const result = await signInWithPassword({ email, password });
+  if (!result.ok) {
+    return { status: "error", formError: result.error, values: { email } };
+  }
+  // TODO(W1): redirect(result.redirectTo) once a real session exists.
+  return {
+    status: "signed-in",
+    fullName: result.fullName,
+    redirectTo: result.redirectTo,
+  };
+}
 
-  return { status: "sent", email, intent };
+export async function signUpAction(_prev, formData) {
+  const accountType = field(formData, "accountType");
+  const fullName = field(formData, "fullName");
+  const email = field(formData, "email");
+  const password = String(formData.get("password") ?? "");
+  const phoneRaw = field(formData, "phone");
+  const values = { accountType, fullName, email, phone: phoneRaw };
+
+  const fieldErrors = {};
+  if (!ACCOUNT_TYPES.has(accountType))
+    fieldErrors.accountType = "Choose the type of account.";
+  const nameError = checkFullName(fullName);
+  if (nameError) fieldErrors.fullName = nameError;
+  const emailError = checkEmail(email);
+  if (emailError) fieldErrors.email = emailError;
+  const passwordError = checkPassword(password, { forSignUp: true });
+  if (passwordError) fieldErrors.password = passwordError;
+  const phone = normalizeBdPhone(phoneRaw);
+  if (phone.error) fieldErrors.phone = phone.error;
+  if (Object.keys(fieldErrors).length) {
+    return { status: "error", fieldErrors, values };
+  }
+
+  const result = await signUp({
+    accountType,
+    fullName,
+    email,
+    password,
+    phone: phone.value,
+  });
+  if (!result.ok) {
+    return {
+      status: "error",
+      formError: result.error,
+      emailTaken: result.code === "email_taken",
+      values,
+    };
+  }
+  // TODO(W1): redirect(result.redirectTo) once a real session exists.
+  return { status: "created", accountType, redirectTo: result.redirectTo };
 }

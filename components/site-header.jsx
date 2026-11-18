@@ -4,12 +4,10 @@ import Link from "next/link";
 import { Pill } from "lucide-react";
 import { NavLink } from "@/components/nav-link";
 
+// Customer links depend on who is signed in and what is in the basket, so the
+// customer layout passes them in (see customerLinks). No "Search" link: the
+// search box is on the home page and the logo goes there.
 const NAV = {
-  customer: [
-    { href: "/", label: "Search", exact: true },
-    { href: "/basket", label: "Basket" },
-    { href: "/reservations", label: "My reservations" },
-  ],
   pharmacy: [
     { href: "/pharmacy", label: "Dashboard", exact: true },
     { href: "/pharmacy/inventory", label: "Inventory" },
@@ -24,8 +22,21 @@ const NAV = {
 
 const AREA_LABEL = { pharmacy: "Pharmacy", admin: "Admin" };
 
-export function SiteHeader({ area = "customer", right }) {
-  const links = NAV[area];
+/**
+ * Links for the customer header (CLAUDE.md "Customer"): "Basket" only once it
+ * has items, "My reservations" only for a signed-in customer.
+ */
+export function customerLinks({ user, basketCount = 0 }) {
+  const links = [];
+  if (basketCount > 0)
+    links.push({ href: "/basket", label: `Basket (${basketCount})` });
+  if (user?.role === "customer")
+    links.push({ href: "/reservations", label: "My reservations" });
+  return links;
+}
+
+export function SiteHeader({ area = "customer", links: customLinks, right }) {
+  const links = customLinks ?? NAV[area] ?? [];
 
   // One <nav> only. On phones it moves to a full-width second row (order-last,
   // w-full) whose links wrap onto another line if needed; from md it sits inline.
@@ -46,16 +57,18 @@ export function SiteHeader({ area = "customer", right }) {
             </span>
           )}
         </Link>
-        <nav
-          aria-label="Main"
-          className="order-last -mx-4 flex w-[calc(100%+2rem)] flex-wrap gap-1 border-t px-3 py-1 md:order-none md:mx-0 md:ml-4 md:w-auto md:flex-nowrap md:border-0 md:p-0"
-        >
-          {links.map((l) => (
-            <NavLink key={l.href} href={l.href} exact={l.exact}>
-              {l.label}
-            </NavLink>
-          ))}
-        </nav>
+        {links.length > 0 && (
+          <nav
+            aria-label="Main"
+            className="order-last -mx-4 flex w-[calc(100%+2rem)] flex-wrap gap-1 border-t px-3 py-1 md:order-none md:mx-0 md:ml-4 md:w-auto md:flex-nowrap md:border-0 md:p-0"
+          >
+            {links.map((l) => (
+              <NavLink key={l.href} href={l.href} exact={l.exact}>
+                {l.label}
+              </NavLink>
+            ))}
+          </nav>
+        )}
         <div className="ml-auto flex shrink-0 items-center gap-2">{right}</div>
       </div>
     </header>

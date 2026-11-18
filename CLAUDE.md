@@ -70,9 +70,21 @@ mobile app.
 
 ### Build these
 
-**Sign-up**
-- One email magic-link sign-in page with two choices: "I'm looking for medicine"
-  (customer) and "I own a pharmacy" (goes on to the pharmacy registration form)
+**Accounts (decided 18 Nov 2026, D5)**
+- **Email + password** (Supabase Auth). One `/sign-in` page with two tabs:
+  **Sign in** (email, password; no role choice) and **Create account**.
+- Create account: choose **"I'm looking for medicine"** (customer) or **"I own a
+  pharmacy"**, then full name, email, password (8–72 characters), phone
+  (Bangladeshi mobile, stored, not verified). Pharmacy accounts go on to the
+  shop registration form (its fields are decided in U3).
+- **One email = one account = one type.** The type is fixed at sign-up.
+  **Pharmacy accounts cannot reserve medicines**; to buy for themselves an owner
+  makes a separate customer account with another email.
+- Messages never reveal what kind of account an email belongs to:
+  "An account with this email already exists. Sign in instead." and
+  "Email or password is incorrect."
+- After sign-in: customer → search, pharmacy → dashboard, admin → admin pages.
+- Email confirmation is **off** for the demo. No "forgot password" for now.
 - Admin is never offered; it is set once by hand with SQL
 
 **Pharmacy**
@@ -88,10 +100,13 @@ mobile app.
 - Simple dashboard: today's sales, low stock count, active reservations
 
 **Customer**
-- Browse and search with no account
+- Browse, search and build a basket with no account
+- Header for signed-out visitors: logo and "Sign in" only. "Basket" appears once
+  it has items; "My reservations" only for a signed-in customer. The search box
+  lives in the home page's blue box (no "Search" header link).
 - Search a medicine, see nearby shops that have it, sorted by distance
 - Each result: stock status, price, distance, verified badge, prescription-only badge
-- Sign in to reserve (email magic link)
+- Sign in (or create a customer account) is asked for only at **"Reserve"**
 - Location from the browser, or an area picker if the customer declines
 - Per-shop basket: add several medicines from the same shop, then reserve them
   together as **one reservation** with one 30-minute hold and one pickup code
@@ -119,7 +134,9 @@ These are deliberately out of scope. If a prompt seems to ask for one, confirm f
 - Shop open/closed toggle
 - Licence auto-expiry jobs
 - Customer credit, day-close, accounting, supplier purchasing
-- SMS or phone OTP — email magic link only
+- SMS or phone OTP — email + password only (no magic links, no phone verification)
+- Password reset / "forgot password" (for now)
+- Pharmacy accounts reserving medicines
 
 **Stretch goal, only after everything above works and is deployed:** AI
 prescription reading. Upload a prescription image, send it to Google Gemini,
@@ -281,12 +298,16 @@ a city and avoids an extension.
 | pharmacist | Manage own pharmacy's stock, sales and reservations only |
 | admin | Approve or reject pharmacies, manage the medicine catalog |
 
-**How roles are assigned.** Every new user gets `role = 'customer'` from a
-database trigger. Submitting the pharmacy registration form calls a Postgres
-function that creates the `pending` pharmacy and sets the caller's `role` to
-`pharmacist` and `pharmacy_id` in one transaction. The browser never sends a role.
-Users can never update their own `role` or `pharmacy_id`. The admin role is set
-once by hand with SQL.
+**How roles are assigned (D1, revised by D5).** Sign-up sends an account type
+(`customer` or `pharmacy`) with the email and password. A database trigger on
+`auth.users` creates the `profiles` row and maps that type to `role = 'customer'`
+or `role = 'pharmacist'` (with `pharmacy_id` null); **any other value, including
+`admin`, becomes `customer`**. This is the only time user-supplied metadata is
+read, and only these two self-selectable, non-privileged values are accepted.
+The pharmacy registration function then creates the `pending` pharmacy and sets
+`pharmacy_id`; it accepts only a `pharmacist` without a pharmacy. Users can never
+update their own `role` or `pharmacy_id` afterwards. Reservation functions accept
+only `customer` callers. The admin role is set once by hand with SQL.
 
 **Licence photos** live in a private Storage bucket. Only the shop's own
 pharmacist (upload, read) and admins (read) can access them. Images only (JPEG,

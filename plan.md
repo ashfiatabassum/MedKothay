@@ -2,7 +2,7 @@
 
 Deadline: 3 days from 18 November 2026. **Order (decided 18 Nov): UI first with sample data, then the backend, then wire them together.**
 
-M0 → U1 → U2 → U3 → U4 → B1 → W1 → W2 → W3 → F
+M0 → U1 → U1b → U2 → U3 → U4 → B1 → W1 → W2 → W3 → F
 
 Each milestone after M0 is one branch (`feature/<id>-<name>`, for example `feature/u1-foundation`) merged by pull request. Follow the feature loop in `CLAUDE.md`. Tick a box only after it was checked in the running app and recorded in `docs/verification.md`.
 
@@ -34,9 +34,19 @@ Each milestone after M0 is one branch (`feature/<id>-<name>`, for example `featu
 - [x] Route groups `(customer)`, `(pharmacy)`, `(admin)` with layouts; header and navigation that work at 375 px
 - [x] Shared components: stock band badge, verified badge, Rx badge, pickup code display, countdown, loading skeleton, error state, empty state
 - [x] `lib/mock-data.js` (medicines, pharmacies, stock, reservations, sales) and `lib/data/` access functions
-- [x] Sign-in page with the two choices ("I'm looking for medicine" / "I own a pharmacy") and the email field (no email sent yet)
+- [x] Sign-in page with the two choices ("I'm looking for medicine" / "I own a pharmacy") and the email field (no email sent yet). Replaced in U1b by email + password (D5)
 
 **Done when:** every shared component appears on a temporary `/dev/components` page (removed in F); badges have text and pass contrast; header works at 375 px and desktop; lint and build pass.
+
+## U1b: Header and accounts UI (developer feedback, 18 Nov)
+
+- [x] Header: signed out shows logo + "Sign in" only; no "Search" link; "My reservations" only for a signed-in customer; "Basket" left for U2 (appears once it has items)
+- [x] `/sign-in` with tabs **Sign in** (email, password) and **Create account** (type choice, full name, email, password, phone)
+- [x] Server-side validation and neutral messages ("An account with this email already exists. Sign in instead." / "Email or password is incorrect."); pharmacy sign-up continues to `/pharmacy/register`
+- [x] `lib/data/session.js` (current user, signed out until W1) and `lib/data/auth.js` (mock sign-in/sign-up against sample accounts)
+- [x] Home: pharmacy call-to-action opens "Create account" with "I own a pharmacy" chosen
+
+**Done when:** a signed-out visitor sees no Basket/My reservations/Search links; both tabs validate on the server; a known sample email on sign-up shows the neutral "already exists" message; wrong password shows the neutral message; 375 px and 1280 px pass; lint and build pass.
 
 ## U2: Customer screens
 
@@ -71,18 +81,23 @@ Each milestone after M0 is one branch (`feature/<id>-<name>`, for example `featu
 Decisions D1–D4 are confirmed in `docs/data-model.md` (role choice at sign-up; private licence bucket; geolocation or area picker with 5 km radius; multi-medicine reservations). Function return shapes must match `lib/mock-data.js`; if they cannot, change both and record why.
 
 - [ ] Migrations for all tables in `CLAUDE.md` "Data model" (including `reservation_items`), with CHECK constraints and indexes
-- [ ] `profiles` row created on sign-up (role `customer`); role and `pharmacy_id` not user-editable
-- [ ] `register_pharmacy` function: creates the `pending` shop and makes the caller its pharmacist in one transaction (D1)
+- [ ] `profiles` row created by an `auth.users` trigger from the sign-up account type (`customer` → customer, `pharmacy` → pharmacist, anything else → customer; D5); `full_name` and `phone` saved; role and `pharmacy_id` not user-editable
+- [ ] Reservation functions refuse non-customer callers (pharmacy accounts cannot reserve)
+- [ ] Sign-up trigger (security review, U1b): `SECURITY DEFINER`, `SET search_path = ''`, INSERT only; reads **only** `account_type` (exactly `'pharmacy'` → pharmacist, anything else → customer), `full_name` (length-capped) and `phone` (format-checked) from metadata; never copies `role`, `pharmacy_id` or `status`; no `user_metadata` anywhere in RLS
+- [ ] `register_pharmacy` locks the caller's profile (`FOR UPDATE`) so two concurrent calls create one shop; reservation functions check `role = 'customer'` (not `<> 'pharmacist'`); `REVOKE EXECUTE ... FROM PUBLIC, anon` on every RPC that needs a signed-in user; no pharmacy policy uses `coalesce`/`IS NOT DISTINCT FROM` on `pharmacy_id` (a pharmacist without a shop must see nothing)
+- [ ] `register_pharmacy` function: creates the `pending` shop and sets the caller's `pharmacy_id` in one transaction; accepts only a pharmacist without a pharmacy (the role itself comes from the sign-up trigger, D5)
 - [ ] Private `licences` Storage bucket with owner/admin policies (D2)
 - [ ] RLS policies for every table; public stock band read for approved shops only; item tables scoped through their parent
 - [ ] Functions: `search_medicine` (5 km + nearest-outside fallback), `reserve` (basket, all or nothing, lock order by `medicine_id`), `cancel_reservation`, `collect_reservation` (pickup code), `complete_sale`, lazy expiry
 - [ ] Seed: ~100 Bangladeshi medicines, 6-8 Dhaka pharmacies (one pending), varied stock, area centre points
 
-**Done when:** advisors clean; SQL tests per role pass, including: two customers racing for the last unit (exactly one succeeds); a basket where one item is short (nothing held, short item named); two overlapping baskets at once (no deadlock); a sale blocked by holds; a user cannot set their own role; `docs/data-model.md` matches the migrations.
+**Done when:** advisors clean; SQL tests per role pass, including: two customers racing for the last unit (exactly one succeeds); a basket where one item is short (nothing held, short item named); two overlapping baskets at once (no deadlock); a sale blocked by holds; a user cannot set their own role; a direct `/auth/v1/signup` with `{account_type:'admin', role:'admin', pharmacy_id:…}` gives a `customer` with no pharmacy; a pharmacist calling `reserve` is refused; two concurrent `register_pharmacy` calls give one shop; `docs/data-model.md` matches the migrations.
 
 ## W1: Wire auth, registration and admin
 
-- [ ] Email magic link sign-in and sign-out; auth callback with same-site redirect only; role-based redirects
+- [ ] Email + password sign-in, sign-up (with account type, name, phone) and sign-out via Supabase Auth; email confirmation turned off in the dashboard; role-based redirects (customer → search, pharmacy → dashboard, admin → admin); same-site `next` redirects only
+- [ ] Account menu with "Sign out" in every area header (code review, U1b); on customer pages a signed-in pharmacist or admin sees a link back to their own area
+- [ ] Auth hardening (security review, U1b): map every Supabase sign-in/sign-up error to the neutral messages (never show raw Supabase text); confirm Supabase Auth rate limits; any `?next=` return path must be a same-origin path (starts with `/`, not `//`, no ``, no scheme); every protected page and action checks `getClaims`/role on the server, not only in `proxy.js`; remove `mockAccounts` and the mock auth path
 - [ ] Registration form saves through `register_pharmacy` and uploads the licence photo
 - [ ] Admin pending list, licence photo, approve and reject on real data; catalog on real data
 

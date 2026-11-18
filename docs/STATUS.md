@@ -1,7 +1,7 @@
 # Project status and next handoff
 
 **Updated:** 18 November 2026
-**Phase:** M0 and **U1 (UI foundation) complete**; U1 merged by PR #1 (`c6ab437`) and live. Next: U2 (customer screens).
+**Phase:** M0 and U1 complete (U1 live, PR #1). **U1b (header and email + password accounts UI, from developer feedback) built and verified on `feature/u1b-auth-ui`; pull request open.** Next: U2 (customer screens).
 
 - Live: https://med-kothay.vercel.app (auto-deploys from `main`)
 - Repo: https://github.com/ashfiatabassum/MedKothay (public)
@@ -14,6 +14,7 @@
 - Next.js 16 renamed middleware to **`proxy.js`**; it only refreshes the Supabase session. Authorization is done on pages and by RLS.
 - Env var names follow the current Supabase dashboard: `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY` (the anon/publishable key) and `SUPABASE_SECRET_KEY` (server only).
 - Build order (18 Nov): **UI first on sample data (U1–U4), then backend (B1), then wiring (W1–W3)**, at the developer's request. Accepted cost: about half a day of wiring work, and the stock logic is built later. Mitigation: `lib/data/` functions return data in the same shape the Postgres functions will.
+- Accounts (18 Nov, D5): email + password; one email = one account = one type (customer or pharmacy); pharmacy accounts cannot reserve; neutral auth messages; email confirmation off; no password reset for now. Header shows only logo + Sign in when signed out.
 - Theme (18 Nov): white and deep blue `#0B5CAD`, blue-white background, amber accent for pickup code and countdown (`CLAUDE.md` "Theme").
 - Data model decisions D1–D4 (18 Nov): sign-up offers customer or pharmacy owner, but the role is written by the database; licence photos in a private bucket; location from the browser or an area picker, 5 km radius; **one reservation = one shop, many medicines, one pickup code** (new `reservation_items` table). Details in `docs/data-model.md`.
 - Agentic tooling: Prettier PostToolUse hook; skills `grill-me`/`grilling`, `supabase` + `supabase-postgres-best-practices` + project `review-supabase-model`, `vercel-react-best-practices` + project `review-react-ui`; subagents `code-reviewer`, `security-reviewer`, `requirements-reviewer`; Playwright MCP.
@@ -24,6 +25,7 @@
 | --- | :---: | :---: | :---: | --- |
 | M0 setup | Yes | Yes | Yes | Build/lint pass; health ok locally and on Vercel; hook fired in a real edit; Playwright MCP opened the live site |
 | U1 UI foundation | Yes | Yes | Yes | Merged PR #1 (`c6ab437`); Playwright 3 runs, 2 skills, code-reviewer |
+| U1b header and accounts UI | Yes | Yes | Yes | PR open; Playwright 2 runs, review-react-ui, code-reviewer, security-reviewer |
 | U2 customer screens | Yes | No | No | |
 | U3 pharmacy screens | Yes | No | No | |
 | U4 admin screens | Yes | No | No | |
