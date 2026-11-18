@@ -6,6 +6,17 @@
 
 @theme inline {
   --color-background: var(--background);
+  --color-highlight: var(--highlight);
+  --color-highlight-soft: var(--highlight-soft);
+  --color-highlight-foreground: var(--highlight-foreground);
+  --color-in-stock: var(--in-stock);
+  --color-in-stock-foreground: var(--in-stock-foreground);
+  --color-low-stock: var(--low-stock);
+  --color-low-stock-foreground: var(--low-stock-foreground);
+  --color-out-of-stock: var(--out-of-stock);
+  --color-out-of-stock-foreground: var(--out-of-stock-foreground);
+  --color-rx: var(--rx);
+  --color-rx-foreground: var(--rx-foreground);
   --color-foreground: var(--foreground);
   --font-sans: var(--font-geist-sans);
   --font-mono: var(--font-geist-mono);
@@ -49,38 +60,54 @@
 }
 
 :root {
-  --background: oklch(1 0 0);
-  --foreground: oklch(0.145 0 0);
-  --card: oklch(1 0 0);
-  --card-foreground: oklch(0.145 0 0);
-  --popover: oklch(1 0 0);
-  --popover-foreground: oklch(0.145 0 0);
-  --primary: oklch(0.205 0 0);
-  --primary-foreground: oklch(0.985 0 0);
-  --secondary: oklch(0.97 0 0);
-  --secondary-foreground: oklch(0.205 0 0);
-  --muted: oklch(0.97 0 0);
-  --muted-foreground: oklch(0.556 0 0);
-  --accent: oklch(0.97 0 0);
-  --accent-foreground: oklch(0.205 0 0);
-  --destructive: oklch(0.577 0.245 27.325);
-  --border: oklch(0.922 0 0);
-  --input: oklch(0.922 0 0);
-  --ring: oklch(0.708 0 0);
-  --chart-1: oklch(0.87 0 0);
-  --chart-2: oklch(0.556 0 0);
-  --chart-3: oklch(0.439 0 0);
-  --chart-4: oklch(0.371 0 0);
-  --chart-5: oklch(0.269 0 0);
+  /* MedKothay theme: white and deep blue (CLAUDE.md "Theme"). Light mode only. */
+  --background: #f5f8ff; /* blue-white page */
+  --foreground: #0f172a;
+  --card: #ffffff;
+  --card-foreground: #0f172a;
+  --popover: #ffffff;
+  --popover-foreground: #0f172a;
+  --primary: #0b5cad; /* deep medical blue */
+  --primary-foreground: #ffffff;
+  --secondary: #e8f0fb;
+  --secondary-foreground: #0b3f78;
+  --muted: #eef2f8;
+  --muted-foreground: #526075;
+  --accent: #e8f0fb; /* shadcn hover background: light blue, NOT the amber highlight */
+  --accent-foreground: #0b3f78;
+  --destructive: #c62828;
+  --border: #dbe3ef;
+  --input: #c9d4e4;
+  --ring: #0b5cad;
+  --chart-1: #0b5cad;
+  --chart-2: #3b82f6;
+  --chart-3: #f59e0b;
+  --chart-4: #15803d;
+  --chart-5: #7e22ce;
   --radius: 0.625rem;
-  --sidebar: oklch(0.985 0 0);
-  --sidebar-foreground: oklch(0.145 0 0);
-  --sidebar-primary: oklch(0.205 0 0);
-  --sidebar-primary-foreground: oklch(0.985 0 0);
-  --sidebar-accent: oklch(0.97 0 0);
-  --sidebar-accent-foreground: oklch(0.205 0 0);
-  --sidebar-border: oklch(0.922 0 0);
-  --sidebar-ring: oklch(0.708 0 0);
+  --sidebar: #ffffff;
+  --sidebar-foreground: #0f172a;
+  --sidebar-primary: #0b5cad;
+  --sidebar-primary-foreground: #ffffff;
+  --sidebar-accent: #e8f0fb;
+  --sidebar-accent-foreground: #0b3f78;
+  --sidebar-border: #dbe3ef;
+  --sidebar-ring: #0b5cad;
+
+  /* Amber highlight: pickup code and countdown only */
+  --highlight: #f59e0b;
+  --highlight-soft: #fef3c7;
+  --highlight-foreground: #78350f;
+
+  /* Stock bands and badges: soft background + dark text (WCAG AA) */
+  --in-stock: #dcfce7;
+  --in-stock-foreground: #166534;
+  --low-stock: #fef3c7;
+  --low-stock-foreground: #92400e;
+  --out-of-stock: #eef2f6;
+  --out-of-stock-foreground: #475569;
+  --rx: #f3e8ff;
+  --rx-foreground: #6b21a8;
 }
 
 .dark {
