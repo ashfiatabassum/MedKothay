@@ -50,13 +50,13 @@ Each milestone after M0 is one branch (`feature/<id>-<name>`, for example `featu
 
 ## U2: Customer screens
 
-- [ ] Home and search: brand or generic, location from the browser or area picker
-- [ ] Results: shops sorted by distance with band, price, distance, verified and Rx badges; "none within 5 km" message with nearest shops further away; loading and error states
-- [ ] Per-shop basket: add medicines (1–5 each); adding from another shop asks to start a new basket
-- [ ] Reserve confirmation: pickup code and 30-minute countdown; short-item error example
-- [ ] My reservations: items, status, cancel
+- [x] Home and search: brand or generic, location from the browser or area picker
+- [x] Results: shops sorted by distance with band, price, distance, verified and Rx badges; "none within 5 km" message with nearest shops further away; loading and error states
+- [x] Per-shop basket: add medicines (1–5 each); adding from another shop asks to start a new basket
+- [x] Reserve confirmation: pickup code and 30-minute countdown; short-item error example
+- [x] My reservations: items, status, cancel
 
-**Done when:** a signed-out visitor can search and see results; the basket and reservation flow works end to end on mock data; 375 px has no horizontal scroll.
+**Done when:** a signed-out visitor can search and see results; the basket and reservation flow works end to end on mock data; 375 px has no horizontal scroll. **Met 18 Nov** (Playwright U2 runs 1–2). New reservations and cancellations are not saved until W3; a demo session cookie stands in for sign-in until W1.
 
 ## U3: Pharmacy screens
 
