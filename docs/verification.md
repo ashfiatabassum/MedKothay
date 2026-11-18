@@ -8,7 +8,7 @@ Record **observed** results only. A planned test is not a pass. Use test account
 - Supabase project: hosted, ref `gkzqlpaknytdvbbknaxp`
 - Vercel URL: https://med-kothay.vercel.app (project `med-kothay`, auto-deploys from `main`)
 - Hook status (`/hooks`): _to check in a fresh session_
-- Playwright MCP status (`/mcp`): _to check in a fresh session_
+- Playwright MCP status: `claude mcp list` (CLI 2.1.322, 18 Nov 2026) → `playwright: cmd /c npx -y @playwright/mcp@0.0.84 - ✔ Connected`; pre-approved in `.claude/settings.local.json`. Tools available from the next session
 
 ## M0 setup checks
 
