@@ -1,7 +1,11 @@
 # Project status and next handoff
 
 **Updated:** 18 November 2026
-**Phase:** M0 setup, in progress.
+**Phase:** M0 setup **complete** (all "done when" checks pass, see `docs/verification.md`). Next: M1.
+
+- Live: https://med-kothay.vercel.app (auto-deploys from `main`)
+- Repo: https://github.com/ashfiatabassum/MedKothay (public)
+- Supabase: hosted project `gkzqlpaknytdvbbknaxp` (ap-southeast-2), CLI linked; auth Site URL and redirect URLs set for localhost:3000 and the Vercel URL
 
 ## Decisions made
 
@@ -15,7 +19,7 @@
 
 | Milestone | Planned | Implemented | Verified | Notes |
 | --- | :---: | :---: | :---: | --- |
-| M0 setup | Yes | Partly | Partly | Build and lint pass locally; waiting on Supabase project, GitHub repo, Vercel |
+| M0 setup | Yes | Yes | Yes | Build/lint pass; health ok locally and on Vercel; hook fired in a real edit; Playwright MCP opened the live site |
 | M1 schema, RLS, functions, seed | Yes | No | No | |
 | M2 auth and registration | Yes | No | No | |
 | M3 admin | Yes | No | No | |
@@ -26,4 +30,10 @@
 
 ## Next task
 
-Finish M0: create the Supabase project and fill `.env.local`, push to GitHub, deploy to Vercel, check `/api/health` on both. Then start M1 with a `grill-me` session on the data model.
+Start M1 (schema, RLS, stock functions, seed) on branch `feature/m1-schema`: first a `/grill-me` session on the data model and the open questions below, then write the decisions into `docs/data-model.md` before any migration.
+
+Open questions for M1:
+- How a user becomes a pharmacist or admin (role assignment without letting users set their own role).
+- Licence photo storage bucket and who can read it.
+- Search radius value, and where the customer's location comes from (browser geolocation, or area picker as fallback).
+- Whether `reservations` allows quantity > 1.

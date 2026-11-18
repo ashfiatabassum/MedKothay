@@ -2,7 +2,7 @@
 
 Deadline: 3 days from 18 November 2026. Each milestone is one branch (`feature/m<N>-<name>`) merged by pull request, except M0. Follow the feature loop in `CLAUDE.md`. Tick a box only after it was checked in the running app and recorded in `docs/verification.md`.
 
-## M0: Setup (18 Nov)
+## M0: Setup (18 Nov), done
 
 - [x] Next.js 16 (JavaScript, App Router), Tailwind 4, shadcn/ui, Prettier
 - [x] Supabase client helpers (`lib/supabase/`), `proxy.js` session refresh, `supabase/` folder
@@ -13,7 +13,7 @@ Deadline: 3 days from 18 November 2026. Each milestone is one branch (`feature/m
 - [x] GitHub repo created and pushed
 - [x] Vercel project deployed with env vars (https://med-kothay.vercel.app)
 
-**Done when:** `npm run build` and `npm run lint` pass; `/api/health` returns `"supabase":"ok"` locally and on the Vercel URL; `/hooks` shows the PostToolUse hook and it fires on an edit; `/mcp` shows `playwright` connected; Playwright MCP has opened the local home page.
+**Done when (all met 18 Nov 2026):** `npm run build` and `npm run lint` pass; `/api/health` returns `"supabase":"ok"` locally and on the Vercel URL; `/hooks` shows the PostToolUse hook and it fires on an edit; `/mcp` shows `playwright` connected; Playwright MCP has opened the local home page.
 
 ## M1: Schema, RLS, stock functions, seed
 

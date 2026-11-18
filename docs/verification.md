@@ -7,7 +7,7 @@ Record **observed** results only. A planned test is not a pass. Use test account
 - Node 24.18.0, npm 11.16.0, Next.js 16.4.6, React 19.3.0, Tailwind 4.3.3, @supabase/supabase-js 2.119.0, @supabase/ssr 0.12.7, Supabase CLI 3.2.0, Playwright MCP 0.0.84
 - Supabase project: hosted, ref `gkzqlpaknytdvbbknaxp`
 - Vercel URL: https://med-kothay.vercel.app (project `med-kothay`, auto-deploys from `main`)
-- Hook status (`/hooks`): _to check in a fresh session_
+- Hook status: 1 PostToolUse hook, project `.claude/settings.json`, matcher `Edit|Write`, command `node "$CLAUDE_PROJECT_DIR/.claude/hooks/format-changed.cjs"`. **Firing during a real session edit observed 18 Nov 2026** (see M0 checks).
 - Playwright MCP status: `claude mcp list` (CLI 2.1.322, 18 Nov 2026) → `playwright: cmd /c npx -y @playwright/mcp@0.0.84 - ✔ Connected`; pre-approved in `.claude/settings.local.json`. Tools available from the next session
 
 ## M0 setup checks
@@ -18,11 +18,11 @@ Record **observed** results only. A planned test is not a pass. Use test account
 | `npm run lint` | no errors | No output (no errors) 18 Nov 2026 | Pass |
 | Hook, run by hand | formats an in-scope file, ignores others | Piped an Edit event for `lib/__hooktest.js` (`{a:1,   b:2}` plus trailing spaces) → "Formatted with Prettier", file became `{ a: 1, b: 2 };`; `README.md` event → no change | Pass |
 | Supabase CLI linked | `migration list --remote` reaches the hosted DB | 18 Nov 2026: developer ran `npx supabase link`; `migration list --remote` → target `gkzqlpaknytdvbbknaxp` (production), `"migrations":[]`. Without `--remote` CLI v3 tried local Docker and failed (ECONNREFUSED 127.0.0.1:54322) | Pass |
-| Hook fires in a real session edit | Claude Code reports the hook ran | | Not run |
+| Hook fires in a real session edit | Claude Code reports the hook ran | 18 Nov 2026: appended `const _hookProbe = {a:1,b:'x'}` to `lib/utils.js` with the shell, then used Edit on a different line (the comment). Claude Code reported "PostToolUse hook modified c:\MedKothay\lib\utils.js after your edit"; the untouched line became `{ a: 1, b: "x" };`. Probe line then removed. (An earlier trailing-space probe was inconclusive: the Edit tool may strip trailing spaces itself.) | Pass |
 | `/` and `/api/health` locally without env vars | `/` 200; health 503 "not configured" | `npm run start`: `/` 200, title "MedKothay"; health 503 `{"app":"ok","supabase":"not configured"}` (after fix #5) | Pass |
 | `/api/health` locally | 200, `"supabase":"ok"` | `npm run dev` 18 Nov 2026, project `gkzqlpaknytdvbbknaxp`: 200 `{"app":"ok","supabase":"ok"}`; `/` 200 | Pass |
 | `/api/health` on Vercel | 200, `"supabase":"ok"` | 18 Nov 2026, https://med-kothay.vercel.app: 200 `{"app":"ok","supabase":"ok"}`; `/` 200. First deploy had no env vars (503 "not configured"); vars were then added as Config for all environments and a fresh build picked them up | Pass |
-| Playwright MCP opens the home page | page title "MedKothay" | | Not run |
+| Playwright MCP opens the home page | page title "MedKothay" | 18 Nov 2026, live site: title `MedKothay`; snapshot `heading "MedKothay" [level=1]`; at 375×812 `scrollWidth` 375 = `innerWidth` 375 (no horizontal scroll); `/api/health` body `{"app":"ok","supabase":"ok"}`. Screenshot `docs/screenshots/m0-home-375.png`, checked by Claude | Pass |
 
 ## Feature checks
 
@@ -43,13 +43,14 @@ Record **observed** results only. A planned test is not a pass. Use test account
 
 | Date | Milestone | Journey checked | Result |
 | --- | --- | --- | --- |
+| 2026-11-18 | M0 | Live home page (title, h1 via accessibility snapshot), 375 px horizontal-scroll check, `/api/health`, screenshot. Run as a headless `claude -p` session limited to `mcp__playwright__*` tools, because the interactive session had started before `.mcp.json` existed | All pass; `m0-home-375.png` |
 
 ## Issues and corrections log
 
 | # | Date | What went wrong | Caused by | How detected | Fix and verification |
 | --- | --- | --- | --- | --- | --- |
 | 1 | 2026-11-18 | `create-next-app` refused to scaffold into `MedKothay` (npm names cannot contain capitals) | Environment (folder name) | Command error | Scaffolded into a scratchpad folder `medkothay` and copied the files in; build passes |
-| 2 | 2026-11-18 | shadcn `init` generated `components/ui/button.jsx` importing `cn` from `"cn"` instead of `"@/lib/utils"` | Tool (shadcn JavaScript conversion) | Claude read the generated file | Changed the import; build passes |
+| 2 | 2026-11-18 | Claude assumed shadcn's `import { cn } from "cn"` in `components/ui/button.jsx` was a bug and changed it to `"@/lib/utils"`. **Correction:** `cn` is a real dependency (`cn` 0.5.2) and `lib/utils.js` just re-exports it, so the original import was valid | Claude (wrong assumption) | Claude noticed `"cn"` in `package.json` while testing the hook on `lib/utils.js` | Kept the change: both paths resolve to the same function and `@/lib/utils` matches `components.json` aliases; build passes |
 | 3 | 2026-11-18 | shadcn wrote `--font-sans: var(--font-sans)` (refers to itself) in `app/globals.css` | Tool (shadcn) | Claude read the generated file | Pointed it at `--font-geist-sans` from the layout |
 | 4 | 2026-11-18 | Template `.gitignore` rule `.env*` would also hide `.env.example` | Template | Claude read `.gitignore` | Added `!.env.example`; `git check-ignore` confirms `.env.local` ignored and `.env.example` not |
 | 5 | 2026-11-18 | With no Supabase env vars, `lib/supabase/proxy.js` threw on every request, so `/` and `/api/health` returned 500 | Claude (proxy written without an env check) | `npm run start` + `curl` returned 500; server log showed "URL and Key are required" | Proxy skips the refresh when env vars are missing; re-run: `/` 200 with title "MedKothay", `/api/health` 503 `{"app":"ok","supabase":"not configured"}` |
