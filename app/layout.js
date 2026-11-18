@@ -12,7 +12,7 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata = {
-  title: "MedKothay",
+  title: { default: "MedKothay", template: "%s · MedKothay" },
   description:
     "Find which nearby pharmacy has your medicine, and reserve it for pickup.",
 };
