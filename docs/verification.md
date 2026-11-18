@@ -6,7 +6,7 @@ Record **observed** results only. A planned test is not a pass. Use test account
 
 - Node 24.18.0, npm 11.16.0, Next.js 16.4.6, React 19.3.0, Tailwind 4.3.3, @supabase/supabase-js 2.119.0, @supabase/ssr 0.12.7, Supabase CLI 3.2.0, Playwright MCP 0.0.84
 - Supabase project: hosted, ref `gkzqlpaknytdvbbknaxp`
-- Vercel URL: _not deployed yet_
+- Vercel URL: https://med-kothay.vercel.app (project `med-kothay`, auto-deploys from `main`)
 - Hook status (`/hooks`): _to check in a fresh session_
 - Playwright MCP status (`/mcp`): _to check in a fresh session_
 
