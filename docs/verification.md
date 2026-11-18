@@ -21,7 +21,7 @@ Record **observed** results only. A planned test is not a pass. Use test account
 | Hook fires in a real session edit | Claude Code reports the hook ran | | Not run |
 | `/` and `/api/health` locally without env vars | `/` 200; health 503 "not configured" | `npm run start`: `/` 200, title "MedKothay"; health 503 `{"app":"ok","supabase":"not configured"}` (after fix #5) | Pass |
 | `/api/health` locally | 200, `"supabase":"ok"` | `npm run dev` 18 Nov 2026, project `gkzqlpaknytdvbbknaxp`: 200 `{"app":"ok","supabase":"ok"}`; `/` 200 | Pass |
-| `/api/health` on Vercel | 200, `"supabase":"ok"` | | Not run |
+| `/api/health` on Vercel | 200, `"supabase":"ok"` | 18 Nov 2026, https://med-kothay.vercel.app: 200 `{"app":"ok","supabase":"ok"}`; `/` 200. First deploy had no env vars (503 "not configured"); vars were then added as Config for all environments and a fresh build picked them up | Pass |
 | Playwright MCP opens the home page | page title "MedKothay" | | Not run |
 
 ## Feature checks

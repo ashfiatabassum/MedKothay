@@ -11,7 +11,7 @@ Deadline: 3 days from 18 November 2026. Each milestone is one branch (`feature/m
 - [x] Agentic tooling: formatting hook, skills, three reviewer subagents, Playwright MCP
 - [x] Hosted Supabase project created, `.env.local` filled, `npx supabase link` done
 - [x] GitHub repo created and pushed
-- [ ] Vercel project deployed with env vars
+- [x] Vercel project deployed with env vars (https://med-kothay.vercel.app)
 
 **Done when:** `npm run build` and `npm run lint` pass; `/api/health` returns `"supabase":"ok"` locally and on the Vercel URL; `/hooks` shows the PostToolUse hook and it fires on an edit; `/mcp` shows `playwright` connected; Playwright MCP has opened the local home page.
 
