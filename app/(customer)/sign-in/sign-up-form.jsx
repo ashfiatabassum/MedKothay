@@ -30,7 +30,9 @@ const TYPES = [
   },
 ];
 
-export function SignUpForm({ defaultType }) {
+// W1: signing up will also start the session, so "Continue" really continues
+// (in the demo the new account is not saved, so the user is asked to sign in).
+export function SignUpForm({ defaultType, next, signInHref = "/sign-in" }) {
   const [state, formAction, pending] = useActionState(signUpAction, {
     status: "idle",
   });
@@ -56,10 +58,14 @@ export function SignUpForm({ defaultType }) {
             : "You can now reserve medicines from pharmacies near you."}
         </p>
         <Link
-          href={pharmacy ? "/pharmacy/register" : "/"}
+          href={pharmacy ? "/pharmacy/register" : (next ?? "/")}
           className={buttonVariants()}
         >
-          {pharmacy ? "Register your pharmacy" : "Search medicines"}
+          {pharmacy
+            ? "Register your pharmacy"
+            : next
+              ? "Continue"
+              : "Search medicines"}
         </Link>
         <p className="rounded-md bg-muted px-3 py-2 text-xs text-muted-foreground">
           Demo: accounts are saved from step W1. Nothing was saved yet.
@@ -84,7 +90,7 @@ export function SignUpForm({ defaultType }) {
             <>
               An account with this email already exists.{" "}
               <Link
-                href="/sign-in"
+                href={signInHref}
                 className="font-medium underline underline-offset-4"
               >
                 Sign in instead
@@ -219,7 +225,7 @@ export function SignUpForm({ defaultType }) {
       <p className="text-center text-sm text-muted-foreground">
         Already have an account?{" "}
         <Link
-          href="/sign-in"
+          href={signInHref}
           className="font-medium text-primary underline-offset-4 hover:underline"
         >
           Sign in

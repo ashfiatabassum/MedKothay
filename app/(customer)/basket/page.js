@@ -1,13 +1,16 @@
-import { ComingSoon } from "@/components/coming-soon";
+import { PageHeading } from "@/components/area-shell";
+import { BasketView } from "./basket-view";
 
 export const metadata = { title: "Basket" };
 
-export default function Page() {
+export default function BasketPage() {
   return (
-    <ComingSoon
-      title="Basket"
-      step="U2"
-      description="Add medicines from one pharmacy, then reserve them together with one pickup code."
-    />
+    <>
+      <PageHeading
+        title="Your basket"
+        description="Medicines from one pharmacy, reserved together with one pickup code."
+      />
+      <BasketView />
+    </>
   );
 }
