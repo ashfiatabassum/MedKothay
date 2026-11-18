@@ -80,7 +80,7 @@ export default function Home() {
           </div>
         </div>
         <Link
-          href="/sign-in?as=pharmacy"
+          href="/sign-in?mode=signup&as=pharmacy"
           className={cn(buttonVariants({ variant: "outline" }), "shrink-0")}
         >
           Register your pharmacy

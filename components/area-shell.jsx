@@ -1,7 +1,7 @@
 // Page frame shared by the three areas: header, centred content, footer.
 import { SiteHeader } from "@/components/site-header";
 
-export function AreaShell({ area, right, children }) {
+export function AreaShell({ area, links, right, children }) {
   return (
     <>
       <a
@@ -10,7 +10,7 @@ export function AreaShell({ area, right, children }) {
       >
         Skip to content
       </a>
-      <SiteHeader area={area} right={right} />
+      <SiteHeader area={area} links={links} right={right} />
       <main
         id="main"
         tabIndex={-1}
