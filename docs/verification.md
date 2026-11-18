@@ -77,3 +77,4 @@ Record **observed** results only. A planned test is not a pass. Use test account
 
 | Milestone | Branch | PR | Merge commit | Checks at merge |
 | --- | --- | --- | --- | --- |
+| U1 UI foundation | `feature/u1-foundation` (deleted after merge) | [PR #1](https://github.com/ashfiatabassum/MedKothay/pull/1) | `c6ab437` | lint, build, Vercel preview SUCCESS; Playwright 3 runs; `review-react-ui`, `vercel-react-best-practices`, `code-reviewer`. Production after merge (18 Nov): `/`, `/sign-in`, `/pharmacy`, `/admin`, `/admin/catalog`, `/dev/components` 200, `/api/health` ok, 404 page 404. One transient 404 on `/admin` during the deploy switchover, 200 on retry |

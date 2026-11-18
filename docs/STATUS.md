@@ -1,7 +1,7 @@
 # Project status and next handoff
 
 **Updated:** 18 November 2026
-**Phase:** M0 complete. **U1 (UI foundation) built and verified on `feature/u1-foundation`; pull request open, waiting for the developer's check before merge.** Next: U2.
+**Phase:** M0 and **U1 (UI foundation) complete**; U1 merged by PR #1 (`c6ab437`) and live. Next: U2 (customer screens).
 
 - Live: https://med-kothay.vercel.app (auto-deploys from `main`)
 - Repo: https://github.com/ashfiatabassum/MedKothay (public)
@@ -23,7 +23,7 @@
 | Milestone | Planned | Implemented | Verified | Notes |
 | --- | :---: | :---: | :---: | --- |
 | M0 setup | Yes | Yes | Yes | Build/lint pass; health ok locally and on Vercel; hook fired in a real edit; Playwright MCP opened the live site |
-| U1 UI foundation | Yes | Yes | Yes | PR open for developer check; Playwright 3 runs, 2 skills, code-reviewer |
+| U1 UI foundation | Yes | Yes | Yes | Merged PR #1 (`c6ab437`); Playwright 3 runs, 2 skills, code-reviewer |
 | U2 customer screens | Yes | No | No | |
 | U3 pharmacy screens | Yes | No | No | |
 | U4 admin screens | Yes | No | No | |
@@ -35,6 +35,6 @@
 
 ## Next task
 
-After the U1 pull request is merged: start **U2 (customer screens)** on `feature/u2-customer` from an up-to-date `main`. Use `searchMedicine` (`needsLocation` when no location yet) and `getMyReservations` (`expiresAt` only for active) from `lib/data/customer.js`; replace the `/basket` and `/reservations` placeholders and the "search arrives in U2" note on the home page. See `plan.md` "Rules for the UI-first phase".
+Start **U2 (customer screens)** on `feature/u2-customer` from an up-to-date `main`. Use `searchMedicine` (`needsLocation` when no location yet) and `getMyReservations` (`expiresAt` only for active) from `lib/data/customer.js`; replace the `/basket` and `/reservations` placeholders and the "search arrives in U2" note on the home page. See `plan.md` "Rules for the UI-first phase".
 
 Order: U1 → U2 → U3 → U4 → B1 (backend) → W1–W3 (wire up) → F. Data-model decisions D1–D4 are already confirmed (`docs/data-model.md`).
