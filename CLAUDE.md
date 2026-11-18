@@ -346,6 +346,24 @@ Test this path after every significant change.
 - Handle loading and error states on every data screen — a demo that shows a
   blank page while loading looks broken
 
+## Theme (decided 18 Nov 2026)
+
+White and blue, light mode only. Set the colours once as shadcn CSS variables in
+`app/globals.css` (in M2) and use the tokens; never hard-code hex values in
+components.
+
+| Token / use | Colour |
+|---|---|
+| Primary (buttons, links, header, verified check) | deep blue `#0B5CAD` |
+| Page background | blue-white `#F5F8FF`; cards white |
+| Accent (pickup code, countdown only) | amber `#F59E0B` |
+| In stock / Low stock / Out of stock | green / amber / grey |
+| Prescription only ("Rx") | purple |
+| Errors | red |
+
+Every badge has text as well as colour (never colour alone). Text must meet
+WCAG AA contrast on its background.
+
 ---
 
 ## Commands
