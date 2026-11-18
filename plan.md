@@ -30,11 +30,11 @@ Each milestone after M0 is one branch (`feature/<id>-<name>`, for example `featu
 
 ## U1: UI foundation
 
-- [ ] Blue theme tokens in `app/globals.css` (see `CLAUDE.md` "Theme")
-- [ ] Route groups `(customer)`, `(pharmacy)`, `(admin)` with layouts; header and navigation that work at 375 px
-- [ ] Shared components: stock band badge, verified badge, Rx badge, pickup code display, countdown, loading skeleton, error state, empty state
-- [ ] `lib/mock-data.js` (medicines, pharmacies, stock, reservations, sales) and `lib/data/` access functions
-- [ ] Sign-in page with the two choices ("I'm looking for medicine" / "I own a pharmacy") and the email field (no email sent yet)
+- [x] Blue theme tokens in `app/globals.css` (see `CLAUDE.md` "Theme")
+- [x] Route groups `(customer)`, `(pharmacy)`, `(admin)` with layouts; header and navigation that work at 375 px
+- [x] Shared components: stock band badge, verified badge, Rx badge, pickup code display, countdown, loading skeleton, error state, empty state
+- [x] `lib/mock-data.js` (medicines, pharmacies, stock, reservations, sales) and `lib/data/` access functions
+- [x] Sign-in page with the two choices ("I'm looking for medicine" / "I own a pharmacy") and the email field (no email sent yet)
 
 **Done when:** every shared component appears on a temporary `/dev/components` page (removed in F); badges have text and pass contrast; header works at 375 px and desktop; lint and build pass.
 

@@ -28,22 +28,35 @@ Record **observed** results only. A planned test is not a pass. Use test account
 
 | Requirement | Scenario | Expected | Actual result | Pass/Fail/Not run | Evidence / issue / fix |
 | --- | --- | --- | --- | --- | --- |
+| U1 theme | Blue theme tokens, contrast | All text pairs ≥ 4.5:1 | Script check of 13 token pairs: lowest 5.62 (red on white), primary on white 6.67, badges 6.37–7.39; hero 85% white on blue 5.29 | Pass | `app/globals.css`; Playwright scan found no text below AA |
+| U1 routes | Every page at 375 and 1280 | 200, title, h1, no sideways scroll, no console errors | 11 paths (`/`, `/sign-in`, `?as=pharmacy`, `/basket`, `/reservations`, `/pharmacy`, `/pharmacy/inventory`, `/admin`, `/admin/catalog`, `/dev/components`, 404): all as expected; 404 page returns 404 with h1 "This page doesn't exist" (after fix); scrollWidth ≤ innerWidth everywhere | Pass | Playwright runs 1–3, 18 Nov 2026 |
+| U1 header | One nav, active link, phone layout | Single `<nav>`, one `aria-current`, links fit at 375 | 1 nav; only the current link has `aria-current`; at 375 pharmacy links wrap to two rows, all inside the viewport, 40 px tall; one row at 1280 | Pass (after fixes) | `u1-pharmacy-375.png` |
+| U1 sign-in | Two choices, validation, success | `?as=pharmacy` preselects; field errors; "Check your email" | Default "I'm looking for medicine"; `?as=pharmacy` → "I own a pharmacy"; empty → "Enter your email address." (`role="alert"`, `aria-invalid`, focus moves to the email input); `abc` → "Enter a valid email address, like name@example.com."; valid → h2 "Check your email" receives focus, text names the email and "pharmacy registration"; submit button 44 px | Pass (after fixes) | `u1-signin-375.png` |
+| U1 keyboard | Skip link, focus ring | Skip link first; visible focus on choices | First Tab → "Skip to content" (visible at 8,8), Enter moves focus to `<main>`; radio cards show a 3 px focus ring | Pass | Playwright run 2 |
+| U1 components | `/dev/components` | Every shared component renders; data via `lib/data` | Stock, verified, Rx badges with text; pickup code; countdown 17:59 → 17:56 after 3 s, expired shows "Hold expired"; `searchMedicine("napa")` from Dhanmondi returns 3 shops sorted 293 m, 293 m, 4.8 km, bands only; reservations list; loading, empty, error states; headings h1 → h2 → h3 | Pass | `u1-components-1280.png` |
+| U1 data rule | Screens never import sample data | No `mock-data` import outside `lib/data` | `grep` finds none; `mock-data.js` and `lib/data/customer.js` import `server-only` | Pass | |
 
 ## Skill usage log
 
 | # | Date | Skill | Milestone | Invoked (typed/requested/auto) | What it did | Outcome and commit |
 | --- | --- | --- | --- | --- | --- | --- |
+| 1 | 2026-11-18 | `review-react-ui` (project) | U1 | requested (workflow step 3) | Checked U1 against its 8 points | Found: no server-side role check yet (expected; `TODO(W1)` added to pharmacy and admin layouts); sign-in errors not announced and focus lost after success (fixed: `role="alert"`, focus to first invalid field, focus to "Check your email"); buttons 32 px tall (raised to 40/36/44 px in `components/ui/button.jsx`). Bands-only, server components, loading/error files, countdown from server time: OK. U1 branch commit |
+| 2 | 2026-11-18 | `vercel-react-best-practices` | U1 | requested (workflow step 3) | Applied `async-parallel`, `server-auth-actions`, `server-serialization`, `server-no-shared-module-state`, `rerender-derived-state-no-effect`, hydration, `rendering-conditional-render`, `js-hoist-regexp`, `bundle-barrel-imports`, `js-index-maps` | No change needed. One low note not fixed: `.find()` inside loops in `lib/data/customer.js` (sample data, ~15 rows, replaced in W3) |
 
 ## Subagent usage log
 
 | # | Date | Subagent | Milestone | Findings | Fixed / rejected / deferred |
 | --- | --- | --- | --- | --- | --- |
+| 1 | 2026-11-18 | `code-reviewer` | U1 | No High. **M1:** `searchMedicine` crashed on an undefined query, and without a location every distance was `NaN`, so every search looked like "no shops". **M2:** `getMyReservations` returned `expiresAt` for finished reservations and applied no lazy expiry; it also claimed mock "active" rows were 45 and 130 min old. **L3:** no guard for a missing pharmacy. **L4:** `.find()` per row; hard-coded `verified: true`. **L5:** the countdown interval kept running after expiry. Confirmed correct: bands only, no quantity reaches the browser, `retry` usage, sign-in validation, hydration, nav matching | **Fixed:** M1 (`String(query ?? "")`; non-finite lat/lng → `needsLocation: true`, documented), M2 (`expiresAt` null unless active; lazy expiry applied), L3 (filter), L4 (Maps; W3 comment on `verified`), L5 (interval cleared at 0). **Rejected in part:** the "45/130 min active rows" are *sales* rows (`mock-data.js` sales); the only active reservation is 12 min old. Re-checked: lint, build, `/dev/components` still shows 3 search rows and active/collected/expired |
 
 ## Playwright MCP log
 
 | Date | Milestone | Journey checked | Result |
 | --- | --- | --- | --- |
 | 2026-11-18 | M0 | Live home page (title, h1 via accessibility snapshot), 375 px horizontal-scroll check, `/api/health`, screenshot. Run as a headless `claude -p` session limited to `mcp__playwright__*` tools, because the interactive session had started before `.mcp.json` existed | All pass; `m0-home-375.png` |
+| 2026-11-18 | U1 run 1 | 11 routes at 375 and 1280, header, sign-in validation and keyboard, countdown, `lib/data` output, screenshots (local `npm run start`, headless `claude -p`) | Found 5 issues: 404 page without h1, showcase without headings, two navs both labelled "Main", no skip link, one contrast value unmeasured (computed separately: 5.29, pass) |
+| 2026-11-18 | U1 run 2 | Re-check of the fixes, nav, tap sizes, focus after submit | Fixes confirmed; found pharmacy nav cut off at 375 ("Reserva…"), nav links 36 px, focus left on body after a failed submit. One unexplained jump to `/basket` inside the test browser, not reproducible on reload |
+| 2026-11-18 | U1 run 3 | Nav at 375 (pharmacy, admin, customer) and 1280; focus after failed submit | All links inside the viewport and 40 px; focus on `#email`; none observed. Screenshots `u1-home-375`, `u1-home-1280`, `u1-signin-375`, `u1-pharmacy-375`, `u1-components-1280` (checked by Claude) |
 
 ## Issues and corrections log
 
@@ -55,6 +68,10 @@ Record **observed** results only. A planned test is not a pass. Use test account
 | 4 | 2026-11-18 | Template `.gitignore` rule `.env*` would also hide `.env.example` | Template | Claude read `.gitignore` | Added `!.env.example`; `git check-ignore` confirms `.env.local` ignored and `.env.example` not |
 | 5 | 2026-11-18 | With no Supabase env vars, `lib/supabase/proxy.js` threw on every request, so `/` and `/api/health` returned 500 | Claude (proxy written without an env check) | `npm run start` + `curl` returned 500; server log showed "URL and Key are required" | Proxy skips the refresh when env vars are missing; re-run: `/` 200 with title "MedKothay", `/api/health` 503 `{"app":"ok","supabase":"not configured"}` |
 | 6 | 2026-11-18 | `.env.local` was copied from `.env.example` but still had the placeholder URL and an empty key | Developer (copy step); the dashboard snippet also listed TypeScript helper files that are not needed here | Claude listed the variable names with values hidden | Filled both values; `/api/health` → 200 `"supabase":"ok"` |
+| 7 | 2026-11-18 | U1 first version had accessibility gaps: 404 page and showcase without headings, header rendered the nav twice (both "Main"), no skip link | Claude | Playwright run 1 | `EmptyState`/`ErrorState` take `headingLevel` (404 uses h1); one `<nav>` that moves below the logo on phones; skip link to `#main`. Confirmed in run 2 |
+| 8 | 2026-11-18 | Sign-in form did not announce errors, lost focus after success and after a failed submit | Claude | `review-react-ui` + Playwright run 2 | `role="alert"` on errors, focus to first invalid field, focus to "Check your email". Confirmed in runs 2–3 |
+| 9 | 2026-11-18 | Tap targets too small on phones: shadcn default button 32 px, nav links 36 px | Tool defaults (shadcn) + Claude | `review-react-ui`, Playwright run 2 | Buttons 40/36/44 px, nav links 40 px. Confirmed in run 3 |
+| 10 | 2026-11-18 | Pharmacy nav cut off at 375 px ("Reserva…") because the nav row scrolled sideways inside itself | Claude (layout choice) | Playwright run 2 | Links wrap to a second row; "Counter sale" shortened to "Counter". Confirmed in run 3 (all links inside the viewport) |
 
 ## Pull requests and merges
 
