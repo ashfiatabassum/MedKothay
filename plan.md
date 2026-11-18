@@ -9,7 +9,7 @@ Deadline: 3 days from 18 November 2026. Each milestone is one branch (`feature/m
 - [x] `.env.example`; `.env.local` gitignored
 - [x] `/api/health` route
 - [x] Agentic tooling: formatting hook, skills, three reviewer subagents, Playwright MCP
-- [ ] Hosted Supabase project created, `.env.local` filled, `npx supabase link` done
+- [x] Hosted Supabase project created, `.env.local` filled, `npx supabase link` done
 - [ ] GitHub repo created and pushed
 - [ ] Vercel project deployed with env vars
 

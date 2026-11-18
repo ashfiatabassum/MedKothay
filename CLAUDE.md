@@ -326,9 +326,17 @@ npm run lint         # ESLint
 npx prettier --write <paths>   # format (the hook does this on Claude's edits)
 ```
 
-Not yet run (need the hosted Supabase project): `npx supabase link`,
-`npx supabase migration new <name>`, `npx supabase db push` (apply migrations),
-`npx supabase db advisors`. Move them up once they work.
+Supabase CLI (project linked to hosted ref `gkzqlpaknytdvbbknaxp`). **CLI v3
+targets a local Docker database by default; there is none here, so always pass
+`--remote`** for database commands:
+
+```bash
+npx supabase migration list --remote   # applied migrations on the hosted DB
+```
+
+Not yet run (move up once they work): `npx supabase migration new <name>`,
+`npx supabase db push` (apply migrations),
+`npx supabase db advisors --remote` (security/performance checks).
 
 - Health check: `GET /api/health` → 200 with `"supabase":"ok"` when env vars are
   set and Supabase is reachable.
