@@ -454,9 +454,13 @@ For each milestone:
 
 ## Git workflow
 
-- `main` always builds and runs. From M1 on, never commit feature code directly
+- `main` always builds and runs. After M0, never commit feature code directly
   to `main`; docs-only commits may go to `main`.
-- One branch per milestone from an up-to-date `main`: `feature/m<N>-<short-name>`.
+- One branch per milestone from an up-to-date `main`: `feature/<id>-<short-name>`
+  (ids from `plan.md`: u1–u4, b1, w1–w3, f).
+- Build order is UI first on sample data, then backend, then wiring (see
+  `plan.md`). Screens get data only through `lib/data/`, never from
+  `lib/mock-data.js` directly.
   Small commits, one task at a time.
 - Before merging: `npm run lint` and `npm run build` pass, the Playwright check
   and the reviews are done and recorded, "done when" boxes ticked.
