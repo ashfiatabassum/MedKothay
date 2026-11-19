@@ -197,7 +197,7 @@ export function SearchForm({ initial = {}, variant = "hero" }) {
             aria-describedby={
               locError ? `${ids}-loc-error` : `${ids}-loc-status`
             }
-            className="h-11 flex-1 rounded-lg border border-input bg-card px-3 text-sm focus-visible:ring-3 focus-visible:ring-ring/50 focus-visible:outline-none aria-invalid:border-destructive"
+            className="h-11 flex-none rounded-lg border border-input bg-card px-3 text-sm focus-visible:ring-3 focus-visible:ring-ring/50 focus-visible:outline-none aria-invalid:border-destructive sm:flex-1"
           >
             <option value="">
               {location?.kind === "gps"
