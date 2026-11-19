@@ -2,6 +2,7 @@
 import { AreaShell, PageHeading } from "@/components/area-shell";
 import { RxBadge, StockBadge, VerifiedBadge } from "@/components/badges";
 import { Countdown } from "@/components/countdown";
+import { PharmacyStatusBanner } from "@/components/pharmacy-status-banner";
 import { PickupCode } from "@/components/pickup-code";
 import { EmptyState, ErrorState, LoadingList } from "@/components/states";
 import { Button } from "@/components/ui/button";
@@ -68,6 +69,15 @@ export default async function ComponentsPage() {
             <Countdown expiresAt={active.expiresAt} />
             <Countdown expiresAt="2020-01-01T00:00:00Z" />
           </div>
+        </Section>
+
+        <Section title="Pharmacy status banners (D6)">
+          <PharmacyStatusBanner status="pending" />
+          <PharmacyStatusBanner
+            status="rejected"
+            rejectionReason="The licence photo is blurry; the number can't be read."
+          />
+          <PharmacyStatusBanner status="approved" />
         </Section>
 
         <Section title="Buttons">
