@@ -1,7 +1,7 @@
 # Project status and next handoff
 
 **Updated:** 19 November 2026
-**Phase:** M0 and the **UI phase (U1, U1b, U2, U3, U4) complete and live** (last merge PR #5, `05a1b67`). Next: **B1 (backend)**.
+**Phase:** M0 and the **UI phase complete and live** (U1–U4 plus the external UI review fixes, PR #6 `7a332f4`). Next: **B1 (backend)**.
 
 - Live: https://med-kothay.vercel.app (auto-deploys from `main`)
 - Repo: https://github.com/ashfiatabassum/MedKothay (public)
