@@ -1,5 +1,31 @@
 # Verification log
 
+## B1 implementation complete, review gate pending — 19 November 2026 (Codex)
+
+The user authorized Supabase changes and completing B1 on `feature/b1-schema` against linked production project `gkzqlpaknytdvbbknaxp`. The UI still uses sample data until W1–W3.
+
+| Check                    | Observed                                                                                                                                    | Result                         |
+| ------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------ |
+| Migrations and RLS       | Nine migrations applied; eight app tables, transactional RPCs, invoker wrappers and RLS present                                             | Pass                           |
+| Licence Storage          | Private `licences` bucket with 5 MB image limit; owner upload/read/update, admin read; other-owner and anonymous reads refused              | Pass                           |
+| Seed                     | 100 medicines from pinned MIT-licensed MedEx commit, 8 fictional Dhaka shops, 526 stock rows and one visibly invalid generated demo licence | Pass                           |
+| Live integration         | `scripts/verify-b1.mjs` passed 18 role, RLS, workflow and concurrency groups; uniquely prefixed temporary fixtures were removed             | Pass                           |
+| Hosted Auth              | Forged admin/shop signup metadata produced a customer without a shop; email confirmation changed from true to false to match D5             | Pass                           |
+| Search smoke             | Napa nearby results; Seclo/Uttara exactly three distinct outside-radius shops; `zzz` none; pending hidden                                   | Pass                           |
+| Security advisors        | No issues after revoking public execution of the pre-existing RLS helper                                                                    | Pass                           |
+| Project checks           | `npm run lint` and `npm run build`                                                                                                          | Pass                           |
+| Required subagent review | Code, security and requirements agents each failed immediately because the Claude account usage limit was exhausted                         | Blocked; must run before merge |
+
+The 18 live groups cover metadata forgery, role and RLS boundaries, concurrent registration and reservation, private Storage, admin decisions, price snapshots and idempotency, whole-basket pickup, last-unit and opposite-lock-order races, lazy expiry, suspension, stock/licence expiry, active-reservation limits and pharmacist refusal.
+
+Skills used: `supabase` for linked migrations/configuration/Storage/seed/advisors; `supabase-postgres-best-practices` for grants, invoker wrappers, checks, indexes, locks and RLS; `review-supabase-model` for model invariants; `imagegen` for the clearly invalid, fictional demo licence asset.
+
+Corrections made during implementation: public execution of the existing RLS helper was revoked; privileged implementations were moved to the unexposed `private` schema behind invoker wrappers; the hosted email-confirmation setting was aligned with D5; the integration test was corrected to treat an RLS-filtered update as zero rows; public-signup test domains were changed after hosted Auth refused reserved domains. No application email was sent.
+
+Remaining gate: after the account limit resets, run `code-reviewer`, `security-reviewer` and `requirements-reviewer`, fix findings, rerun affected checks, then mark PR #8 ready and merge. Applied migrations are immutable; database corrections require a new migration.
+
+### Earlier B1 checkpoint (superseded)
+
 ## B1 start — 19 November 2026 (Codex)
 
 The user authorized Supabase changes and starting B1. Work is on `feature/b1-schema` against linked production project `gkzqlpaknytdvbbknaxp`. This is a partial milestone; the UI still uses sample data.

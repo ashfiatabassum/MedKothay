@@ -1,6 +1,6 @@
 # Data model
 
-**Status: B1 in progress (19 Nov 2026).** The intended model is in `CLAUDE.md` ("Data model", "Business rules", "Roles and access"). This file records the decisions behind it and, from M1 on, the model **as built** in `supabase/migrations/`: tables, constraints, indexes, RLS policies, functions and grants. Update it in the same change as any migration.
+**Status: B1 implemented and integration-tested (19 Nov 2026); required reviewer gate pending.** The intended model is in `CLAUDE.md` ("Data model", "Business rules", "Roles and access"). This file records the decisions behind it and the model **as built** in `supabase/migrations/`: tables, constraints, indexes, RLS policies, functions and grants. Update it in the same change as any migration.
 
 ## Decisions (confirmed by the developer, 18 Nov 2026)
 
@@ -56,12 +56,22 @@ Agreed in chat instead of a `grill-me` session (no time that day). Claude propos
 | Search radius                    | 5 km                        | `search_medicine`                        |
 | Licence photo                    | JPEG/PNG/WebP, ≤ 5 MB       | Storage policy, registration form        |
 
-## As built (B1, first slice)
+## As built (B1)
 
-Three migrations are applied to the linked Supabase project and tracked on `feature/b1-schema`:
+Nine migrations are applied to the linked Supabase project:
 
-1. `restrict_rls_auto_enable_execute`: the existing `ensure_rls` event trigger remains enabled, but `public.rls_auto_enable()` is no longer executable by `PUBLIC`, `anon` or `authenticated`. This removed two initial security advisor warnings.
-2. `core_schema`: all eight intended tables (`profiles`, `pharmacies`, `medicines`, `pharmacy_stock`, `reservations`, `reservation_items`, `sales`, `sale_items`) exist with UUID keys, foreign keys, checks, unique stock and medicine identities, and lookup indexes. `reservations.client_request_id` is unique per customer; `pharmacies.licence_number_normalized` is a stored generated column. All eight tables have RLS enabled. The `auth.users` insert trigger maps only `account_type` to customer/pharmacist, validates name/phone and ignores client-supplied role/shop fields.
-3. `access_policies`: public medicine names are readable by anonymous and signed-in callers. Profiles, pharmacy details, exact stock, reservations and sales are readable only by relevant participants and admin. Only admin can insert/update catalog rows directly. Other mutations await transactional RPCs. Role helpers live in unexposed `private` and are executable only by signed-in callers.
+1. `restrict_rls_auto_enable_execute` keeps the existing RLS event trigger active while revoking its helper from public callers.
+2. `core_schema` creates the eight intended tables (`profiles`, `pharmacies`, `medicines`, `pharmacy_stock`, `reservations`, `reservation_items`, `sales`, `sale_items`) with UUID keys, foreign keys, checks, lookup indexes, unique stock/medicine identities and RLS. The Auth trigger accepts only the whitelisted account type, name and phone and ignores forged role/shop metadata.
+3. `access_policies` scopes private rows to their customer, pharmacy owner or admin. Anonymous callers can read medicine catalog data, but cannot read exact stock or licence documents.
+4. `pharmacy_admin_rpcs` implements registration, same-row resubmission, approval, rejection, suspension, duplicate-licence lookup and catalog usage. Suspension cancels active reservations and releases their holds transactionally.
+5. `private_licence_storage` creates the private `licences` bucket (JPEG/PNG/WebP, 5 MB) with owner upload/read/update and admin read policies.
+6. `expose_invoker_wrappers` moves privileged implementations to the unexposed `private` schema and exposes `SECURITY INVOKER` wrappers with least-privilege grants.
+7. `stock_transactions` implements anonymous band-only search, idempotent all-or-nothing reserve, cancellation, collection, counter sale, lazy expiry and customer reservation reads. Stock rows are locked in deterministic medicine order.
+8. `search_and_suspension` finalizes distinct-shop fallback search and suspension behavior.
+9. `inventory_management` adds owner stock management and prevents collection from expired stock.
 
-**Still to build:** registration/review RPCs, stock/search/reservation/sale functions, private licence bucket, seed and full role/concurrency tests. W1?W3 have not wired the app to these tables; the live UI remains on sample data. The security advisor finds no issues; policy catalog inspection does not replace end-to-end authorization tests.
+The seed contains 100 medicine rows derived from the pinned MIT-licensed MedEx dataset commit `2b5c93b0ef4ed27cb10f23e1892996eb2e12bd51`, eight fictional Dhaka pharmacies (seven approved, one pending), 526 varied stock rows, expired stock coverage and a clearly invalid generated demo licence image in private storage. Hosted Auth email confirmation is off, matching D5.
+
+`scripts/verify-b1.mjs` passed 18 live integration groups covering signup metadata forgery, role and RLS boundaries, concurrent registration and reservation, private Storage, all admin decisions, price snapshots and idempotency, whole-basket pickup, last-unit and opposite-lock-order races, lazy expiry, suspension, stock/licence expiry, active-reservation limits and pharmacist refusal. Security advisors, lint and build are clean.
+
+W1–W3 have not wired the app to these tables; the live UI remains on sample data. The branch remains unmerged until the required code, security and requirements subagent reviews can run.
