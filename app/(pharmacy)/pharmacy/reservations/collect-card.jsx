@@ -2,7 +2,7 @@
 
 // One incoming reservation. The pharmacist enters the customer's 6-digit
 // pickup code to mark the whole reservation collected (no partial pickup).
-import { useActionState, useEffect, useRef } from "react";
+import { useActionState, useEffect, useRef, useState } from "react";
 import { CircleCheck } from "lucide-react";
 import { ReservationStatusBadge, RxBadge } from "@/components/badges";
 import { Countdown } from "@/components/countdown";
@@ -23,7 +23,10 @@ export function CollectCard({ reservation: r }) {
   useFocusFirstError(formRef, state);
   const doneRef = useRef(null);
   const collected = state.status === "collected";
-  const status = collected ? "collected" : r.status;
+  // Set when the countdown reaches zero while the page is open: the hold is
+  // over, so the collect form goes away (the server refuses it anyway).
+  const [expired, setExpired] = useState(false);
+  const status = collected ? "collected" : expired ? "expired" : r.status;
   const total = r.items.reduce((s, i) => s + i.quantity * i.unitPrice, 0);
 
   useEffect(() => {
@@ -47,7 +50,14 @@ export function CollectCard({ reservation: r }) {
         <ReservationStatusBadge status={status} className="shrink-0" />
       </div>
 
-      {status === "active" && <Countdown expiresAt={r.expiresAt} />}
+      {status === "active" && (
+        <Countdown expiresAt={r.expiresAt} onExpire={() => setExpired(true)} />
+      )}
+      {expired && !collected && (
+        <p role="status" className="text-sm text-muted-foreground">
+          The hold has ended. These units can be sold at the counter again.
+        </p>
+      )}
 
       <ul className="divide-y text-sm">
         {r.items.map((i) => (

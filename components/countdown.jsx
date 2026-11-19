@@ -3,7 +3,7 @@
 // Time left on a reservation hold, counted from the server's expiresAt (never
 // from when the page was opened). Renders "--:--" until mounted so server and
 // client HTML match.
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Clock } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -18,15 +18,26 @@ function format(ms) {
   return `${String(m).padStart(2, "0")}:${String(s).padStart(2, "0")}`;
 }
 
-export function Countdown({ expiresAt, className }) {
+/**
+ * `onExpire` is called once when the hold ends, so the card around it can switch
+ * to "Expired" and hide its code and buttons. The server still enforces expiry.
+ */
+export function Countdown({ expiresAt, onExpire, className }) {
   const [msLeft, setMsLeft] = useState(null);
+  const onExpireRef = useRef(onExpire);
+  useEffect(() => {
+    onExpireRef.current = onExpire;
+  });
 
   useEffect(() => {
     let id;
     const tick = () => {
       const left = remaining(expiresAt);
       setMsLeft(left);
-      if (left === 0) clearInterval(id); // stop once the hold has expired
+      if (left === 0) {
+        clearInterval(id); // stop once the hold has expired
+        onExpireRef.current?.();
+      }
     };
     id = setInterval(tick, 1000);
     tick();

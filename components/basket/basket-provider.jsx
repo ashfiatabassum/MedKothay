@@ -11,7 +11,7 @@ import {
   setBasket,
   subscribe,
 } from "@/components/basket/basket-store";
-import { MAX_UNITS_PER_ITEM } from "@/lib/constants";
+import { MAX_BASKET_ITEMS, MAX_UNITS_PER_ITEM } from "@/lib/constants";
 
 const BasketContext = createContext(null);
 const noopSubscribe = () => () => {};
@@ -36,13 +36,21 @@ export function BasketProvider({ children }) {
   /**
    * shop = { pharmacyId, pharmacyName, address }
    * item = { medicineId, brandName, strength, form, prescriptionOnly, unitPrice }
-   * Returns "added" | "already" | "conflict" (another shop's basket exists).
+   * Returns "added" | "already" | "conflict" (another shop's basket exists)
+   * | "full" (MAX_BASKET_ITEMS different medicines already).
    * With { replace: true } a basket from another shop is replaced.
    */
   const add = useCallback(
     (shop, item, { replace = false } = {}) => {
       if (basket && basket.pharmacyId !== shop.pharmacyId && !replace) {
         return "conflict";
+      }
+      if (
+        basket?.pharmacyId === shop.pharmacyId &&
+        basket.items.length >= MAX_BASKET_ITEMS &&
+        !basket.items.some((i) => i.medicineId === item.medicineId)
+      ) {
+        return "full";
       }
       if (
         basket?.pharmacyId === shop.pharmacyId &&

@@ -7,6 +7,7 @@ import Link from "next/link";
 import { Check, Plus } from "lucide-react";
 import { Button, buttonVariants } from "@/components/ui/button";
 import { useBasket } from "@/components/basket/basket-provider";
+import { MAX_BASKET_ITEMS } from "@/lib/constants";
 import { cn } from "@/lib/utils";
 
 export function AddToBasketButton({ shop, item, disabled }) {
@@ -26,6 +27,12 @@ export function AddToBasketButton({ shop, item, disabled }) {
   const inBasket =
     basket?.pharmacyId === shop.pharmacyId &&
     basket.items.some((i) => i.medicineId === item.medicineId);
+  // Worked out from the basket each render, so it clears as soon as an item is
+  // removed (here or in another tab).
+  const full =
+    basket?.pharmacyId === shop.pharmacyId &&
+    basket.items.length >= MAX_BASKET_ITEMS &&
+    !inBasket;
 
   if (disabled) {
     return (
@@ -59,7 +66,7 @@ export function AddToBasketButton({ shop, item, disabled }) {
     return (
       <div
         role="alert"
-        className="w-full space-y-2 rounded-lg border border-highlight bg-highlight-soft p-3 text-sm text-highlight-foreground"
+        className="w-full space-y-2 rounded-lg border border-primary/30 bg-secondary p-3 text-sm text-secondary-foreground"
       >
         <p>
           Your basket has medicines from {basket?.pharmacyName}. A reservation
@@ -92,11 +99,21 @@ export function AddToBasketButton({ shop, item, disabled }) {
     );
   }
 
+  if (full) {
+    return (
+      <p role="alert" className="w-full text-sm text-destructive sm:w-auto">
+        Your basket is full ({MAX_BASKET_ITEMS} medicines). Reserve it first, or
+        remove something.
+      </p>
+    );
+  }
+
   return (
     <Button
       ref={controlRef}
       onClick={() => {
-        if (add(shop, item) === "conflict") setConflict(true);
+        const result = add(shop, item);
+        if (result === "conflict") setConflict(true);
       }}
       disabled={!ready}
       className="w-full sm:w-auto"

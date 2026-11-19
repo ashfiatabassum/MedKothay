@@ -9,6 +9,7 @@ import {
   FormField,
   TextInput,
   useFocusFirstError,
+  useReturnFocus,
 } from "@/components/form-field";
 import { EmptyState } from "@/components/states";
 import { Button } from "@/components/ui/button";
@@ -137,6 +138,7 @@ function MedicineFields({ prefix, errors, d = {}, autoFocus = false }) {
 
 function MedicineRow({ m }) {
   const [editing, setEditing] = useState(false);
+  const editButtonRef = useReturnFocus(editing);
   const [state, formAction, pending] = useActionState(updateMedicineAction, {
     status: "idle",
   });
@@ -195,6 +197,7 @@ function MedicineRow({ m }) {
         </form>
       ) : (
         <Button
+          ref={editButtonRef}
           variant="outline"
           onClick={() => setEditing(true)}
           aria-label={`Edit ${m.brandName} ${m.strength}`}
@@ -209,6 +212,7 @@ function MedicineRow({ m }) {
 
 function AddMedicine() {
   const [open, setOpen] = useState(false);
+  const addButtonRef = useReturnFocus(open);
   const [state, formAction, pending] = useActionState(addMedicineAction, {
     status: "idle",
   });
@@ -217,7 +221,7 @@ function AddMedicine() {
 
   if (!open) {
     return (
-      <Button onClick={() => setOpen(true)}>
+      <Button ref={addButtonRef} onClick={() => setOpen(true)}>
         <Plus aria-hidden="true" />
         Add medicine
       </Button>

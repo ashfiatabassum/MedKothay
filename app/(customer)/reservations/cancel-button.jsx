@@ -18,6 +18,20 @@ export function CancellableReservation({ reservation, headingLevel }) {
   const wasConfirming = useRef(false);
 
   const cancelled = state.status === "cancelled";
+  // Set when the countdown reaches zero while the page is open.
+  const [expired, setExpired] = useState(false);
+  const expiredRef = useRef(null);
+  // Only move focus on expiry if the person was in the confirm step (whose
+  // buttons disappear); otherwise leave their focus where it is.
+  const focusOnExpiry = useRef(false);
+  function handleExpire() {
+    focusOnExpiry.current = confirming;
+    setConfirming(false);
+    setExpired(true);
+  }
+  useEffect(() => {
+    if (expired && focusOnExpiry.current) expiredRef.current?.focus();
+  }, [expired]);
 
   // Keep keyboard focus on something that still exists.
   useEffect(() => {
@@ -29,7 +43,19 @@ export function CancellableReservation({ reservation, headingLevel }) {
   }, [confirming]);
 
   let actions;
-  if (cancelled) {
+  if (expired && !cancelled) {
+    actions = (
+      <p
+        ref={expiredRef}
+        tabIndex={-1}
+        role="status"
+        className="text-sm text-muted-foreground focus:outline-none"
+      >
+        The 30-minute hold has ended, so the pharmacy can sell these medicines
+        again. Reserve again if you still need them.
+      </p>
+    );
+  } else if (cancelled) {
     actions = (
       <p
         ref={messageRef}
@@ -87,10 +113,13 @@ export function CancellableReservation({ reservation, headingLevel }) {
       reservation={
         cancelled
           ? { ...reservation, status: "cancelled", expiresAt: null }
-          : reservation
+          : expired
+            ? { ...reservation, status: "expired", expiresAt: null }
+            : reservation
       }
       headingLevel={headingLevel}
       actions={actions}
+      onExpire={handleExpire}
     />
   );
 }

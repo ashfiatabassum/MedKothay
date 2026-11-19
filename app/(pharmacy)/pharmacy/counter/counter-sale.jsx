@@ -10,7 +10,7 @@ import { FocusMessage, SuccessHeading } from "@/components/form-field";
 import { EmptyState } from "@/components/states";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { formatTaka } from "@/lib/constants";
+import { MAX_SALE_LINES, formatTaka } from "@/lib/constants";
 import { completeSaleAction } from "../actions";
 
 export function CounterSale({ stock }) {
@@ -40,9 +40,10 @@ export function CounterSale({ stock }) {
     setResult(null);
     setLines(fn);
   };
+  const full = lines.length >= MAX_SALE_LINES;
   const add = (id) =>
     change((ls) =>
-      ls.some((l) => l.medicineId === id)
+      ls.some((l) => l.medicineId === id) || ls.length >= MAX_SALE_LINES
         ? ls
         : [...ls, { medicineId: id, quantity: 1 }],
     );
@@ -142,6 +143,12 @@ export function CounterSale({ stock }) {
         {q.trim().length >= 2 && matches.length === 0 && (
           <p className="text-sm text-muted-foreground">Not in your stock.</p>
         )}
+        {full && (
+          <p className="text-sm text-muted-foreground">
+            This sale has {MAX_SALE_LINES} medicines, the most one sale can
+            hold. Complete it, then start a new sale.
+          </p>
+        )}
         <ul className="space-y-2">
           {matches.map((s) => {
             const inSale = lines.some((l) => l.medicineId === s.medicineId);
@@ -168,7 +175,11 @@ export function CounterSale({ stock }) {
                 <Button
                   variant={inSale ? "secondary" : "outline"}
                   onClick={() => add(s.medicineId)}
-                  disabled={inSale || s.available <= 0}
+                  // Locked while a sale is being completed, so nothing is
+                  // added after the request was sent.
+                  disabled={
+                    inSale || s.available <= 0 || pending || (full && !inSale)
+                  }
                   aria-label={`${inSale ? "Added" : s.available <= 0 ? (s.heldQuantity > 0 ? "All reserved" : "None left") : "Add"}: ${s.brandName} ${s.strength}`}
                 >
                   {inSale
@@ -246,6 +257,7 @@ export function CounterSale({ stock }) {
                         inputMode="numeric"
                         min={1}
                         value={l.quantity}
+                        disabled={pending}
                         onChange={(e) => setQty(l.medicineId, e.target.value)}
                         onBlur={() =>
                           l.quantity === "" && setQty(l.medicineId, 1)

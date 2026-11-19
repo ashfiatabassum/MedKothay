@@ -6,7 +6,7 @@ import { buttonVariants } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 
 const STYLES = {
-  pending: "border-highlight bg-highlight-soft text-highlight-foreground",
+  pending: "border-primary/30 bg-secondary text-secondary-foreground", // amber is only for pickup code + timer
   rejected: "border-destructive/40 bg-destructive/5 text-destructive",
   approved:
     "border-in-stock-foreground/30 bg-in-stock text-in-stock-foreground",

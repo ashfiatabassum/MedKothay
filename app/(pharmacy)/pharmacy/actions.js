@@ -13,6 +13,7 @@ import {
   updateStock,
 } from "@/lib/data/pharmacy";
 import { findArea } from "@/lib/areas";
+import { MAX_SALE_LINES } from "@/lib/constants";
 import { checkFullName, normalizeBdPhone } from "@/lib/validation";
 
 const text = (fd, name) => String(fd.get(name) ?? "").trim();
@@ -47,13 +48,30 @@ function dhakaToday() {
   return new Date(Date.now() + 6 * 3_600_000).toISOString().slice(0, 10);
 }
 
-/** A real calendar date after today (Dhaka), at most `maxYears` ahead. */
-function futureDate(value, maxYears = 10) {
+/** A real calendar date (YYYY-MM-DD), past or future, or null. */
+function realDate(value) {
   if (!/^\d{4}-\d{2}-\d{2}$/.test(value)) return null;
   const d = new Date(`${value}T00:00:00Z`);
   // Round trip rejects overflow like 2027-02-31 (which Date turns into March 3).
   if (Number.isNaN(d.getTime()) || d.toISOString().slice(0, 10) !== value)
     return null;
+  return value;
+}
+
+/**
+ * For editing existing stock: a real date, past or future, within sensible
+ * bounds (from 2000 to 10 years ahead), so typos like 0001 or 9999 are refused.
+ */
+function plausibleDate(value) {
+  if (!realDate(value)) return null;
+  const today = dhakaToday();
+  const max = `${Number(today.slice(0, 4)) + 10}${today.slice(4)}`;
+  return value >= "2000-01-01" && value <= max ? value : null;
+}
+
+/** A real calendar date after today (Dhaka), at most `maxYears` ahead. */
+function futureDate(value, maxYears = 10) {
+  if (!realDate(value)) return null;
   const today = dhakaToday();
   const max = `${Number(today.slice(0, 4)) + maxYears}${today.slice(4)}`;
   return value > today && value <= max ? value : null;
@@ -154,7 +172,9 @@ export async function updateStockAction(_prev, fd) {
   const medicineId = text(fd, "medicineId");
   const quantity = intIn(fd.get("quantity"), 0, 100_000);
   const sellingPrice = priceOk(fd.get("sellingPrice"));
-  const expiryDate = futureDate(text(fd, "expiryDate"));
+  // Editing existing stock accepts a past expiry, so expired stock can still be
+  // corrected or set to 0 (only NEW stock must expire in the future).
+  const expiryDate = plausibleDate(text(fd, "expiryDate"));
   const values = {
     quantity: text(fd, "quantity"),
     sellingPrice: text(fd, "sellingPrice"),
@@ -164,7 +184,8 @@ export async function updateStockAction(_prev, fd) {
   if (quantity === null) e.quantity = "Enter a whole number from 0 to 100000.";
   if (sellingPrice === null)
     e.sellingPrice = "Enter a price in taka, like 12 or 12.50.";
-  if (!expiryDate) e.expiryDate = "Enter a future expiry date.";
+  if (!expiryDate)
+    e.expiryDate = "Enter a real expiry date (from 2000 up to 10 years ahead).";
   if (Object.keys(e).length) return { status: "error", fieldErrors: e, values };
   const r = await updateStock({
     pharmacyId: own.pharmacy.id,
@@ -188,7 +209,12 @@ export async function completeSaleAction(payload) {
   const raw = Array.isArray(payload?.items) ? payload.items : [];
   const seen = new Set();
   const items = [];
-  for (const i of raw.slice(0, 50)) {
+  if (raw.length > MAX_SALE_LINES)
+    return {
+      status: "error",
+      message: `A sale can have at most ${MAX_SALE_LINES} different medicines. Split it into two sales.`,
+    };
+  for (const i of raw) {
     const medicineId =
       typeof i?.medicineId === "string" ? i.medicineId.slice(0, 64) : "";
     const quantity = intIn(i?.quantity, 1, 1000);

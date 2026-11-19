@@ -5,12 +5,10 @@
 // is untrusted: it is re-validated here and prices are taken from the server.
 import { getCurrentUser } from "@/lib/data/session";
 import { reserveBasket } from "@/lib/data/customer";
-import { MAX_UNITS_PER_ITEM } from "@/lib/constants";
-
-const MAX_ITEMS = 20;
+import { MAX_BASKET_ITEMS, MAX_UNITS_PER_ITEM } from "@/lib/constants";
 
 function parseItems(raw) {
-  if (!Array.isArray(raw) || raw.length === 0 || raw.length > MAX_ITEMS)
+  if (!Array.isArray(raw) || raw.length === 0 || raw.length > MAX_BASKET_ITEMS)
     return null;
   const seen = new Set();
   const items = [];

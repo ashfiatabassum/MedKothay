@@ -134,3 +134,18 @@ export function FocusMessage({ role = "status", className, children }) {
     </p>
   );
 }
+
+/**
+ * For inline forms that replace their own "Edit"/"Add" button: when the form
+ * closes, focus goes back to that button instead of being lost on <body>.
+ * Attach the returned ref to the button that opens the form.
+ */
+export function useReturnFocus(open) {
+  const triggerRef = useRef(null);
+  const wasOpen = useRef(open);
+  useEffect(() => {
+    if (wasOpen.current && !open) triggerRef.current?.focus();
+    wasOpen.current = open;
+  }, [open]);
+  return triggerRef;
+}
