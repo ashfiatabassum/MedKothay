@@ -15,6 +15,7 @@ const LABEL = {
   pending: "Pending",
   approved: "Approved",
   rejected: "Rejected",
+  suspended: "Suspended",
 };
 const one = (v) => String(Array.isArray(v) ? v[0] : (v ?? ""));
 

@@ -93,6 +93,7 @@ export async function registerPharmacyAction(_prev, fd) {
     area: text(fd, "area"),
     lat: text(fd, "lat"),
     lng: text(fd, "lng"),
+    locationSource: text(fd, "locationSource"),
     phone: text(fd, "phone"),
     licenceNumber: text(fd, "licenceNumber"),
     licenceExpiry: text(fd, "licenceExpiry"),
@@ -108,6 +109,8 @@ export async function registerPharmacyAction(_prev, fd) {
   const lng = Number(v.lng);
   if (area && !(lat > 20 && lat < 27 && lng > 88 && lng < 93))
     e.location = "Set the shop's location.";
+  if (!["area", "device"].includes(v.locationSource))
+    e.location = "Choose the shop's area or use your current location.";
   const phone = normalizeBdPhone(v.phone);
   if (phone.error)
     e.phone = phone.error.replace(
@@ -126,7 +129,13 @@ export async function registerPharmacyAction(_prev, fd) {
   if (Object.keys(e).length)
     return { status: "error", fieldErrors: e, values: v };
 
-  const result = await registerPharmacy({ user });
+  const result = await registerPharmacy({
+    user,
+    ...v,
+    lat,
+    lng,
+    phone: phone.value,
+  });
   if (!result.ok)
     return { status: "error", formError: result.error, values: v };
   return { status: "submitted", shopName: v.name };

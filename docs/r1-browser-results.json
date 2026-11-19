@@ -1,0 +1,249 @@
+{
+  "baseURL": "http://localhost:3100",
+  "browser": "Chrome (headless, isolated profiles)",
+  "checks": [
+    {
+      "name": "anonymous home, keyboard skip and form errors",
+      "width": 375,
+      "result": "pass"
+    },
+    {
+      "name": "location refusal keeps area search available",
+      "width": 375,
+      "result": "pass"
+    },
+    {
+      "name": "search, units, shop contacts and basket conflict",
+      "width": 375,
+      "result": "pass"
+    },
+    {
+      "name": "outside-radius fallback and truthful empty state",
+      "width": 375,
+      "result": "pass"
+    },
+    {
+      "name": "reserve asks for sign-in, keeps basket and return path",
+      "width": 375,
+      "result": "pass"
+    },
+    {
+      "name": "price change confirmation, pickup deadline and expiration",
+      "width": 375,
+      "result": "pass"
+    },
+    {
+      "name": "My reservations suspension explanation and confirmed cancel",
+      "width": 375,
+      "result": "pass"
+    },
+    {
+      "name": "owner sign-in, expired inventory and units",
+      "width": 375,
+      "result": "pass"
+    },
+    {
+      "name": "counter held-stock block and successful sale",
+      "width": 375,
+      "result": "pass"
+    },
+    {
+      "name": "pickup code rejects errors, collects whole basket and shows units",
+      "width": 375,
+      "result": "pass"
+    },
+    {
+      "name": "pharmacist_rejected banner and saved-location correction",
+      "width": 375,
+      "result": "pass"
+    },
+    {
+      "name": "pharmacist_suspended banner and saved-location correction",
+      "width": 375,
+      "result": "pass"
+    },
+    {
+      "name": "pharmacist_expired banner and saved-location correction",
+      "width": 375,
+      "result": "pass"
+    },
+    {
+      "name": "second pharmacy sees only its own reservations",
+      "width": 375,
+      "result": "pass"
+    },
+    {
+      "name": "admin sign-in, duplicate licence and review history",
+      "width": 375,
+      "result": "pass"
+    },
+    {
+      "name": "admin approve confirmation and suspension reason",
+      "width": 375,
+      "result": "pass"
+    },
+    {
+      "name": "admin catalog requires shared-edit confirmation and preserves fields",
+      "width": 375,
+      "result": "pass"
+    },
+    {
+      "name": "anonymous home, keyboard skip and form errors",
+      "width": 1280,
+      "result": "pass"
+    },
+    {
+      "name": "location refusal keeps area search available",
+      "width": 1280,
+      "result": "pass"
+    },
+    {
+      "name": "search, units, shop contacts and basket conflict",
+      "width": 1280,
+      "result": "pass"
+    },
+    {
+      "name": "outside-radius fallback and truthful empty state",
+      "width": 1280,
+      "result": "pass"
+    },
+    {
+      "name": "reserve asks for sign-in, keeps basket and return path",
+      "width": 1280,
+      "result": "pass"
+    },
+    {
+      "name": "price change confirmation, pickup deadline and expiration",
+      "width": 1280,
+      "result": "pass"
+    },
+    {
+      "name": "My reservations suspension explanation and confirmed cancel",
+      "width": 1280,
+      "result": "pass"
+    },
+    {
+      "name": "owner sign-in, expired inventory and units",
+      "width": 1280,
+      "result": "pass"
+    },
+    {
+      "name": "counter held-stock block and successful sale",
+      "width": 1280,
+      "result": "pass"
+    },
+    {
+      "name": "pickup code rejects errors, collects whole basket and shows units",
+      "width": 1280,
+      "result": "pass"
+    },
+    {
+      "name": "pharmacist_rejected banner and saved-location correction",
+      "width": 1280,
+      "result": "pass"
+    },
+    {
+      "name": "pharmacist_suspended banner and saved-location correction",
+      "width": 1280,
+      "result": "pass"
+    },
+    {
+      "name": "pharmacist_expired banner and saved-location correction",
+      "width": 1280,
+      "result": "pass"
+    },
+    {
+      "name": "second pharmacy sees only its own reservations",
+      "width": 1280,
+      "result": "pass"
+    },
+    {
+      "name": "admin sign-in, duplicate licence and review history",
+      "width": 1280,
+      "result": "pass"
+    },
+    {
+      "name": "admin approve confirmation and suspension reason",
+      "width": 1280,
+      "result": "pass"
+    },
+    {
+      "name": "admin catalog requires shared-edit confirmation and preserves fields",
+      "width": 1280,
+      "result": "pass"
+    },
+    {
+      "name": "customer account creation accepts Bangla mobile and returns to basket",
+      "width": 375,
+      "result": "pass"
+    },
+    {
+      "name": "pharmacy account creation continues to step two and registers",
+      "width": 375,
+      "result": "pass"
+    },
+    {
+      "name": "Rx requirements appear before Reserve",
+      "width": 375,
+      "result": "pass"
+    },
+    {
+      "name": "pharmacy account cannot reserve; protected role routes refuse access",
+      "width": 375,
+      "result": "pass"
+    },
+    {
+      "name": "failed request retains basket and retry identity through reload",
+      "width": 375,
+      "result": "pass"
+    },
+    {
+      "name": "delayed successful reservation preserves a replacement basket in another tab",
+      "width": 375,
+      "result": "pass"
+    },
+    {
+      "name": "customer account creation accepts Bangla mobile and returns to basket",
+      "width": 1280,
+      "result": "pass"
+    },
+    {
+      "name": "pharmacy account creation continues to step two and registers",
+      "width": 1280,
+      "result": "pass"
+    },
+    {
+      "name": "Rx requirements appear before Reserve",
+      "width": 1280,
+      "result": "pass"
+    },
+    {
+      "name": "pharmacy account cannot reserve; protected role routes refuse access",
+      "width": 1280,
+      "result": "pass"
+    },
+    {
+      "name": "failed request retains basket and retry identity through reload",
+      "width": 1280,
+      "result": "pass"
+    },
+    {
+      "name": "delayed successful reservation preserves a replacement basket in another tab",
+      "width": 1280,
+      "result": "pass"
+    },
+    {
+      "name": "expired pending licence displays warning and disables approval",
+      "width": 375,
+      "result": "pass"
+    },
+    {
+      "name": "expired pending licence displays warning and disables approval",
+      "width": 1280,
+      "result": "pass"
+    }
+  ],
+  "errors": [],
+  "expectedNotFoundResponses": 2,
+  "expectedNetworkFailures": 2
+}

@@ -25,6 +25,8 @@ export function VerifiedBadge({ className }) {
     <Badge
       variant="outline"
       className={cn("border-primary/30 text-primary", className)}
+      // Not DGDA accreditation: MedKothay checked the submitted licence.
+      title="Licence documents reviewed by MedKothay"
     >
       <BadgeCheck aria-hidden="true" />
       Verified

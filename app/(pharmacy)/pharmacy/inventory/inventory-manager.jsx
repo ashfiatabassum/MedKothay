@@ -16,7 +16,7 @@ import { EmptyState } from "@/components/states";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { formatTaka } from "@/lib/constants";
+import { perUnit } from "@/lib/constants";
 import { addStockAction, updateStockAction } from "../actions";
 
 const today = () =>
@@ -67,7 +67,7 @@ function StockFields({
       </FormField>
       <FormField
         id={`${idPrefix}-price`}
-        label="Selling price (৳)"
+        label="Selling price (৳ per tablet, capsule, bottle or vial)"
         error={errors.sellingPrice}
       >
         {(a) => (
@@ -133,6 +133,11 @@ function InventoryRow({ row }) {
         <div className="flex flex-wrap gap-2">
           <StockBadge band={row.band} />
           {row.prescriptionOnly && <RxBadge />}
+          {row.expired && (
+            <Badge className="border-transparent bg-destructive text-white">
+              Expired: can&apos;t be sold or reserved
+            </Badge>
+          )}
           {row.expiringSoon && (
             <Badge className="border-transparent bg-destructive/10 text-destructive">
               Expires soon
@@ -157,7 +162,7 @@ function InventoryRow({ row }) {
         <div>
           <dt className="text-muted-foreground">Price</dt>
           <dd className="font-medium tabular-nums">
-            {formatTaka(row.sellingPrice)}
+            {perUnit(row.sellingPrice, row.form)}
           </dd>
         </div>
         <div>
@@ -335,6 +340,9 @@ export function InventoryManager({ rows, catalog }) {
         </div>
         <AddStock catalog={catalog} />
       </div>
+      <p className="text-sm text-muted-foreground">
+        Medicine not in the catalog? Contact the MedKothay admin to add it.
+      </p>
       <p className="text-sm text-muted-foreground" aria-live="polite">
         {filtered.length} of {rows.length} medicines
       </p>

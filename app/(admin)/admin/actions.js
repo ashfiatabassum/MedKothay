@@ -7,7 +7,9 @@ import {
   FORMS,
   addMedicine,
   approvePharmacy,
+  medicineUsage,
   rejectPharmacy,
+  suspendPharmacy,
   updateMedicine,
 } from "@/lib/data/admin";
 
@@ -49,6 +51,27 @@ export async function rejectAction(_prev, fd) {
   const r = await rejectPharmacy(id, reason);
   return r.ok
     ? { status: "rejected" }
+    : { status: "error", message: r.error, values: { reason } };
+}
+
+/** D18: suspend an approved shop with a reason the owner will see. */
+export async function suspendAction(_prev, fd) {
+  if (!(await isAdmin())) return { status: "error", message: NOT_ADMIN };
+  const id = text(fd, "pharmacyId").slice(0, 64);
+  const reason = text(fd, "reason");
+  if (reason.length < 10 || reason.length > 300) {
+    return {
+      status: "error",
+      fieldErrors: {
+        reason:
+          "Write the reason for the owner (10 to 300 characters), e.g. what was found.",
+      },
+      values: { reason },
+    };
+  }
+  const r = await suspendPharmacy(id, reason);
+  return r.ok
+    ? { status: "suspended" }
     : { status: "error", message: r.error, values: { reason } };
 }
 
@@ -94,6 +117,18 @@ export async function updateMedicineAction(_prev, fd) {
   const { v, e } = readMedicine(fd);
   if (Object.keys(e).length)
     return { status: "error", fieldErrors: e, values: v };
+  // D20: a medicine stocked by pharmacies changes for all of them; the admin
+  // must confirm that explicitly.
+  const usedBy = await medicineUsage(id);
+  if (usedBy > 0 && fd.get("confirmShared") !== "on") {
+    return {
+      status: "error",
+      fieldErrors: {
+        confirmShared: `Tick the box to confirm: this changes the medicine for all ${usedBy} pharmacies that stock it.`,
+      },
+      values: v,
+    };
+  }
   const r = await updateMedicine(id, v);
   return r.ok
     ? { status: "saved", values: v }

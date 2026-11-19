@@ -83,13 +83,15 @@ Fields and status decided 18 Nov (D6). A second demo pharmacy account without a 
 
 From the external workflow reviews of the pharmacy, customer and admin sides (all accepted 19 Nov; decisions D7–D21).
 
-- [ ] "Expired" badge in owner inventory; expired rows shown as unavailable (D9)
-- [ ] Unit wording everywhere: "per tablet / capsule / bottle / vial" (D11)
-- [ ] Resubmit flow wording for rejected and expired-licence shops (D7, D12)
-- [ ] Wording fixes from the review (photo hint, "Shop location", Rx check, missing medicine, Verified tooltip)
-- [ ] Customer review: Rx list + whole-basket note before Reserve; "Nothing has been reserved"; "Pick up by HH:MM"; Expired on the confirmation screen; Call and Directions; coverage and area-centre distance wording; new-basket, add-another and search-again links; soonest-to-expire first; Bangla digits in phone numbers; trusted-person pickup note
-- [ ] Price-changed confirmation in the basket (D13) and request id on Reserve (D14), on sample data; 3-active limit message (D15); fallback = 3 distinct shops (D16)
-- [ ] Admin review: Approve confirmation with shop + licence number; checklist above the decision; expired licence refused (D17); Suspend with reason on approved shops, owner banner and resubmit, customer reservations shown cancelled "pharmacy unavailable" (D18); duplicate-licence warning (D19); "used by N pharmacies" confirm on catalog edits (D20); location source and previous rejection reason on the review page (D21); best-effort email wording
+**19 Nov continuation:** all items below are implemented and verified on sample data. Following the user's authorization to use Playwright directly after browser-host failures, 48 real Chrome journey groups passed at 375/1280, with 13 deterministic data/action groups and lint/build also passing. Final browser QA caught and fixed a shrinking phone area picker. Reviews and evidence are in `docs/verification.md`; database guarantees remain B1/W1–W3 work.
+
+- [x] "Expired" badge in owner inventory; expired rows shown as unavailable (D9)
+- [x] Unit wording everywhere: "per tablet / capsule / bottle / vial" (D11)
+- [x] Resubmit flow wording for rejected and expired-licence shops (D7, D12)
+- [x] Wording fixes from the review (photo hint, "Shop location", Rx check, missing medicine, Verified tooltip)
+- [x] Customer review: Rx list + whole-basket note before Reserve; "Nothing has been reserved"; "Pick up by HH:MM"; Expired on the confirmation screen; Call and Directions; coverage and area-centre distance wording; new-basket, add-another and search-again links; soonest-to-expire first; Bangla digits in phone numbers; trusted-person pickup note
+- [x] Price-changed confirmation in the basket (D13) and request id on Reserve (D14), on sample data; 3-active limit message (D15); fallback = 3 distinct shops (D16)
+- [x] Admin review: Approve confirmation with shop + licence number; checklist above the decision; expired licence refused (D17); Suspend with reason on approved shops, owner banner and resubmit, customer reservations shown cancelled "pharmacy unavailable" (D18); duplicate-licence warning (D19); "used by N pharmacies" confirm on catalog edits (D20); location source and previous rejection reason on the review page (D21); best-effort email wording
 
 ## B1: Backend (schema, RLS, stock functions, seed)
 

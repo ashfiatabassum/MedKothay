@@ -12,7 +12,7 @@ import {
   useFocusFirstError,
 } from "@/components/form-field";
 import { Button } from "@/components/ui/button";
-import { formatTaka } from "@/lib/constants";
+import { countUnits, formatTaka } from "@/lib/constants";
 import { collectAction } from "../actions";
 
 export function CollectCard({ reservation: r }) {
@@ -67,7 +67,8 @@ export function CollectCard({ reservation: r }) {
           >
             <span className="flex flex-wrap items-center gap-2">
               <span>
-                <span className="font-medium">{i.name}</span> × {i.quantity}
+                <span className="font-medium">{i.name}</span> ×{" "}
+                {countUnits(i.quantity, i.form)}
               </span>
               {i.prescriptionOnly && <RxBadge />}
             </span>

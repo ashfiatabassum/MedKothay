@@ -1,10 +1,19 @@
 // A reservation: shop, items, total, status; pickup code and countdown while
 // active. Used on the basket confirmation and on "My reservations".
-import { Phone, MapPin } from "lucide-react";
+import { MapPin } from "lucide-react";
 import { ReservationStatusBadge, RxBadge } from "@/components/badges";
 import { Countdown } from "@/components/countdown";
 import { PickupCode } from "@/components/pickup-code";
-import { formatTaka } from "@/lib/constants";
+import { ShopContact } from "@/components/shop-contact";
+import { countUnits, formatTaka } from "@/lib/constants";
+
+// Same output on server and browser: fixed locale and time zone.
+const PICKUP_TIME = new Intl.DateTimeFormat("en-GB", {
+  hour: "numeric",
+  minute: "2-digit",
+  hour12: true,
+  timeZone: "Asia/Dhaka",
+});
 
 export function ReservationCard({
   reservation: r,
@@ -26,26 +35,37 @@ export function ReservationCard({
             <MapPin className="size-3.5 shrink-0" aria-hidden="true" />
             {r.pharmacyAddress}
           </p>
-          <p className="flex items-center gap-1 text-sm text-muted-foreground">
-            <Phone className="size-3.5 shrink-0" aria-hidden="true" />
-            <a
-              href={`tel:${r.pharmacyPhone}`}
-              className="underline-offset-4 hover:underline"
-            >
-              {r.pharmacyPhone}
-            </a>
-          </p>
         </div>
         <ReservationStatusBadge status={r.status} className="shrink-0" />
       </div>
 
+      {r.status === "cancelled" &&
+        r.cancellationReason === "pharmacy_unavailable" && (
+          <p role="status" className="rounded-lg bg-muted px-3 py-2 text-sm">
+            Cancelled: pharmacy unavailable. These medicines are no longer held.
+            Search again to reserve from another pharmacy.
+          </p>
+        )}
+
       {active && (
         <div className="space-y-2">
           <PickupCode code={r.pickupCode} />
-          <div className="flex flex-wrap items-center gap-2 text-sm text-muted-foreground">
+          <div className="flex flex-wrap items-center gap-2 text-sm">
             <Countdown expiresAt={r.expiresAt} onExpire={onExpire} />
-            <span>Pick up before the hold ends, or it is released.</span>
+            <span className="font-medium">
+              Pick up by {PICKUP_TIME.format(new Date(r.expiresAt))}
+            </span>
           </div>
+          <p className="text-sm text-muted-foreground">
+            After that the hold is released. Anyone with this code can collect
+            (bring the prescription for Rx medicines).
+          </p>
+          <ShopContact
+            name={r.pharmacyName}
+            phone={r.pharmacyPhone}
+            latitude={r.pharmacyLatitude}
+            longitude={r.pharmacyLongitude}
+          />
         </div>
       )}
 
@@ -58,7 +78,8 @@ export function ReservationCard({
             <span className="flex flex-wrap items-center gap-2">
               <span>
                 <span className="font-medium">{i.medicine.brandName}</span>{" "}
-                {i.medicine.strength} × {i.quantity}
+                {i.medicine.strength} ×{" "}
+                {countUnits(i.quantity, i.medicine.form)}
               </span>
               {i.medicine.prescriptionOnly && <RxBadge />}
             </span>

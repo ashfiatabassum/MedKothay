@@ -6,7 +6,9 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "eslint"
+    "lint": "eslint",
+    "verify:r1": "node --experimental-vm-modules scripts/verify-r1.mjs",
+    "verify:r1:browser": "node scripts/verify-r1-browser.mjs"
   },
   "dependencies": {
     "@base-ui/react": "^1.9.0",

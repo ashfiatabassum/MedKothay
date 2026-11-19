@@ -34,6 +34,7 @@ no local database).
 **Next.js 16 is newer than your training data.** Read the relevant guide in
 `node_modules/next/dist/docs/` before using an API you are unsure of (see
 `AGENTS.md`). Known differences:
+
 - Middleware is now `proxy.js` (root). It only refreshes the Supabase session; it
   is not authorization.
 - Cache Components is **turned off** in `next.config.mjs` on purpose. Do not add
@@ -73,6 +74,7 @@ mobile app.
 ### Build these
 
 **Accounts (decided 18 Nov 2026, D5)**
+
 - **Email + password** (Supabase Auth). One `/sign-in` page with two tabs:
   **Sign in** (email, password; no role choice) and **Create account**.
 - Create account: choose **"I'm looking for medicine"** (customer) or **"I own a
@@ -91,6 +93,7 @@ mobile app.
 - Admin is never offered; it is set once by hand with SQL
 
 **Pharmacy**
+
 - Register (step 2 of 2 after creating a pharmacy account; fields decided 18 Nov):
   shop name, address, area (from the list), map location (starts at the area
   centre; "use my current location" to adjust), shop phone, DGDA licence number,
@@ -113,6 +116,7 @@ mobile app.
 - Simple dashboard: today's sales, low stock count, active reservations
 
 **Customer**
+
 - Browse, search and build a basket with no account
 - Header for signed-out visitors: logo and "Sign in" only. "Basket" appears once
   it has items; "My reservations" only for a signed-in customer. The search box
@@ -127,6 +131,7 @@ mobile app.
 - See own reservations with their status
 
 **Admin**
+
 - List pharmacies pending approval
 - View licence details and photo, approve or reject with a reason
 - Approval is refused for an already expired licence (D17); a licence
@@ -226,6 +231,7 @@ reservations                    -- one per basket: one shop, one pickup code
   customer_id       uuid references profiles
   pickup_code       text        -- 6 digits
   status            text        -- 'active' | 'collected' | 'cancelled' | 'expired'
+  cancellation_reason text nullable -- 'pharmacy_unavailable' on suspension (D18)
   expires_at        timestamptz -- created_at + 30 minutes
   created_at        timestamptz
 
@@ -264,6 +270,7 @@ This is what customers see and what the counter may sell. Never let it go negati
 ## Business rules
 
 **Stock display**
+
 - `available_quantity = 0` → "Out of stock"
 - `available_quantity` between 1 and 5 → "Low stock"
 - `available_quantity` 6 or more → "In stock"
@@ -277,6 +284,7 @@ This is what customers see and what the counter may sell. Never let it go negati
   so ("৳12 per tablet"). No separate unit column.
 
 **Reservation**
+
 - One reservation = one shop, one to 20 medicines (1 to 5 units each), one
   pickup code, one status. A basket can never mix shops.
 - **Price check (D13):** reserving sends the prices the customer saw; if any
@@ -310,12 +318,14 @@ This is what customers see and what the counter may sell. Never let it go negati
   count always agree (D10)
 
 **Counter sale**
+
 - The pharmacist may only sell up to `available_quantity`
 - A sale decreases `quantity`, never `held_quantity`
 - If a pharmacist tries to sell stock that is on hold, show a clear message
   saying how many units are reserved
 
 **Visibility**
+
 - Only `status = 'approved'` pharmacies **whose licence has not expired**
   (`licence_expiry` on or after today, Asia/Dhaka) appear in customer search.
   Checked on every read, not by a background job (D12)
@@ -323,6 +333,7 @@ This is what customers see and what the counter may sell. Never let it go negati
   still sign in and prepare their inventory
 
 **Search**
+
 - Match on both brand name and generic name
 - Sort results by distance ascending
 - Location: browser geolocation, or the centre of an area the customer picks
@@ -342,12 +353,12 @@ a city and avoids an extension.
 
 ## Roles and access
 
-| Role | Can do |
-|---|---|
-| anonymous | Search medicines, see approved pharmacies and stock bands |
-| customer | The above, plus create and cancel own reservations |
-| pharmacist | Manage own pharmacy's stock, sales and reservations only |
-| admin | Approve or reject pharmacies, manage the medicine catalog |
+| Role       | Can do                                                    |
+| ---------- | --------------------------------------------------------- |
+| anonymous  | Search medicines, see approved pharmacies and stock bands |
+| customer   | The above, plus create and cancel own reservations        |
+| pharmacist | Manage own pharmacy's stock, sales and reservations only  |
+| admin      | Approve or reject pharmacies, manage the medicine catalog |
 
 **How roles are assigned (D1, revised by D5).** Sign-up sends an account type
 (`customer` or `pharmacy`) with the email and password. A database trigger on
@@ -424,14 +435,14 @@ White and blue, light mode only. Set the colours once as shadcn CSS variables in
 `app/globals.css` (in M2) and use the tokens; never hard-code hex values in
 components.
 
-| Token / use | Colour |
-|---|---|
-| Primary (buttons, links, header, verified check) | deep blue `#0B5CAD` |
-| Page background | blue-white `#F5F8FF`; cards white |
-| Accent (pickup code, countdown only) | amber `#F59E0B` |
-| In stock / Low stock / Out of stock | green / amber / grey |
-| Prescription only ("Rx") | purple |
-| Errors | red |
+| Token / use                                      | Colour                            |
+| ------------------------------------------------ | --------------------------------- |
+| Primary (buttons, links, header, verified check) | deep blue `#0B5CAD`               |
+| Page background                                  | blue-white `#F5F8FF`; cards white |
+| Accent (pickup code, countdown only)             | amber `#F59E0B`                   |
+| In stock / Low stock / Out of stock              | green / amber / grey              |
+| Prescription only ("Rx")                         | purple                            |
+| Errors                                           | red                               |
 
 Every badge has text as well as colour (never colour alone). Text must meet
 WCAG AA contrast on its background.
@@ -489,6 +500,7 @@ conflict, stop, describe the conflict, and fix the plan before coding.
 ## Agentic workflow: plan → implement → verify
 
 Tools in this project:
+
 - **Hook:** PostToolUse on `Edit|Write` runs `.claude/hooks/format-changed.cjs`
   (Prettier on `app/`, `components/`, `lib/`, `supabase/`, `proxy.js`).
 - **Skills** (general + project pair; the project skill and this file win
@@ -505,6 +517,7 @@ Tools in this project:
 - **MCP:** Playwright (`.mcp.json`) for browser checks.
 
 For each milestone:
+
 1. **Plan:** short plan (plan mode, or `grill-me` for big ones). Confirm acceptance
    criteria and the stock and access rules it touches. Write decisions into
    `plan.md` / `docs/data-model.md` before coding.

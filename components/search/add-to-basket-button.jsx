@@ -70,7 +70,8 @@ export function AddToBasketButton({ shop, item, disabled }) {
       >
         <p>
           Your basket has medicines from {basket?.pharmacyName}. A reservation
-          can only be from one pharmacy.
+          can only be from one pharmacy. Starting a new basket here removes the
+          items from {basket?.pharmacyName}.
         </p>
         <div className="flex flex-wrap gap-2">
           <Button

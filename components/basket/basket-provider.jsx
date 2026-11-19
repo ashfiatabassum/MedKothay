@@ -7,6 +7,7 @@
 import { createContext, use, useCallback, useSyncExternalStore } from "react";
 import {
   getBasket,
+  basketFingerprint,
   getServerBasket,
   setBasket,
   subscribe,
@@ -100,13 +101,58 @@ export function BasketProvider({ children }) {
     [update],
   );
 
-  const clear = useCallback(() => update(() => null), [update]);
+  // A successful reservation clears only the basket that was submitted. A
+  // replacement built in another tab while waiting must survive the response.
+  const clear = useCallback(
+    (submitted) => {
+      let cleared = false;
+      update((prev) => {
+        if (
+          submitted &&
+          basketFingerprint(prev) !== basketFingerprint(submitted)
+        )
+          return prev;
+        cleared = Boolean(prev);
+        return null;
+      });
+      return cleared;
+    },
+    [update],
+  );
+
+  /** Take the server's current prices after a "prices changed" answer (D13). */
+  const setPrices = useCallback(
+    (prices, submitted) =>
+      update((prev) =>
+        prev &&
+        (!submitted || basketFingerprint(prev) === basketFingerprint(submitted))
+          ? {
+              ...prev,
+              items: prev.items.map((i) =>
+                Number.isFinite(prices?.[i.medicineId])
+                  ? { ...i, unitPrice: prices[i.medicineId] }
+                  : i,
+              ),
+            }
+          : prev,
+      ),
+    [update],
+  );
 
   const count = basket?.items.length ?? 0;
 
   return (
     <BasketContext
-      value={{ basket, ready, count, add, setQuantity, remove, clear }}
+      value={{
+        basket,
+        ready,
+        count,
+        add,
+        setQuantity,
+        remove,
+        clear,
+        setPrices,
+      }}
     >
       {children}
     </BasketContext>

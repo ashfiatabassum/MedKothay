@@ -1,7 +1,7 @@
 # Project status and next handoff
 
 **Updated:** 19 November 2026
-**Phase:** M0 and the UI phase complete and live. **All three workflow reviews accepted** (pharmacy D7–D12, customer D13–D16, admin D17–D21). Next: **R1** (the UI changes they require, on sample data), then **B1 (backend)**.
+**Phase:** M0 and the original UI phase complete and live. **R1 is complete on sample data:** code/requirements/security reviews, 13 contract groups, 48 real Chrome journey groups at 375/1280, lint and build passed. Branch: `feature/r1-review-changes`; PR/merge is being finalized. B1 (backend) has not started.
 
 - Live: https://med-kothay.vercel.app (auto-deploys from `main`)
 - Repo: https://github.com/ashfiatabassum/MedKothay (public)
@@ -18,6 +18,7 @@
 - Demo session (U2/U3, until W1): signing in with a sample account sets an httpOnly cookie holding only that account's **key** (customer, pharmacist, pharmacist_new, pharmacist_pending, pharmacist_rejected, admin), never an id or role from the browser. Sample data only; removed in W1.
 - Sample pending shops for the admin: Green Life Pharmacy (owner `pending@`) and Rahman Drug House (no owner; licence expires 2026-12-10, so it shows "expires within 30 days" until then and "expired" after).
 - Demo accounts (password `demo-password`, all `@medkothay.test`): `customer`, `pharmacy` (approved Lazz Pharma), `newpharmacy` (no shop yet: step 2), `pending` (Green Life, pending), `rejected` (MediCare Point, rejected with a reason), `admin`.
+- R1 adds `suspended@medkothay.test` (Gulshan Community Pharmacy; owner correction flow) and `expired@medkothay.test` (Banani Care; approved shop with an expired licence). The customer has a cancelled sample reservation marked "pharmacy unavailable". These are fixed sample states, not persisted admin decisions.
 - Pharmacy registration (D6, 18 Nov): shop name, address, area, map location, shop phone, DGDA licence number, licence photo (≤ 5 MB, checked by content; server action body limit 6 MB), licence expiry; status banner on the dashboard; two emails from W1 (developer will set up a Gmail app password).
 - Theme (18 Nov): white and deep blue `#0B5CAD`, blue-white background, amber accent for pickup code and countdown (`CLAUDE.md` "Theme").
 - Admin workflow review (19 Nov), accepted: D17 no approval of an expired licence; D18 `suspended` status (leaves search, active reservations cancelled, owner can resubmit); D19 duplicate licence warning; D20 catalog edit warning, no delete; D21 review metadata (submitted/reviewed at/by, previous reason, location source); plus wording and small UI (in R1).
@@ -28,22 +29,27 @@
 
 ## Progress
 
-| Milestone | Planned | Implemented | Verified | Notes |
-| --- | :---: | :---: | :---: | --- |
-| M0 setup | Yes | Yes | Yes | Build/lint pass; health ok locally and on Vercel; hook fired in a real edit; Playwright MCP opened the live site |
-| U1 UI foundation | Yes | Yes | Yes | Merged PR #1 (`c6ab437`); Playwright 3 runs, 2 skills, code-reviewer |
-| U1b header and accounts UI | Yes | Yes | Yes | Merged PR #2 (`34d1f42`); Playwright 2 runs, review-react-ui, code-reviewer, security-reviewer |
-| U2 customer screens | Yes | Yes | Yes | Merged PR #3 (`26be1b4`); Playwright 2 runs; review-react-ui, vercel-react-best-practices; code, security and requirements reviewers. Sample data: new reservations and cancels are **not saved** until W3 |
-| U3 pharmacy screens | Yes | Yes | Yes | Merged PR #4 (`460454e`); Playwright 6 runs; review-react-ui, vercel-react-best-practices; code, security and requirements reviewers. Registration, stock edits, sales and collection are **not saved** until W1–W3 |
-| U4 admin screens | Yes | Yes | Yes | Merged PR #5 (`05a1b67`); Playwright 4 runs; review-react-ui, vercel-react-best-practices; code, security and requirements reviewers. Decisions and catalog changes are **not saved** until W1 |
-| B1 schema, RLS, functions, seed | Yes | No | No | |
-| W1 wire auth, registration, admin | Yes | No | No | |
-| W2 wire inventory, counter sale | Yes | No | No | |
-| W3 wire search, reservations, collection | Yes | No | No | |
-| F demo loop and hand-in | Yes | No | No | |
+| Milestone                                | Planned | Implemented | Verified | Notes                                                                                                                                                                                                                                                             |
+| ---------------------------------------- | :-----: | :---------: | :------: | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| M0 setup                                 |   Yes   |     Yes     |   Yes    | Build/lint pass; health ok locally and on Vercel; hook fired in a real edit; Playwright MCP opened the live site                                                                                                                                                  |
+| U1 UI foundation                         |   Yes   |     Yes     |   Yes    | Merged PR #1 (`c6ab437`); Playwright 3 runs, 2 skills, code-reviewer                                                                                                                                                                                              |
+| U1b header and accounts UI               |   Yes   |     Yes     |   Yes    | Merged PR #2 (`34d1f42`); Playwright 2 runs, review-react-ui, code-reviewer, security-reviewer                                                                                                                                                                    |
+| U2 customer screens                      |   Yes   |     Yes     |   Yes    | Merged PR #3 (`26be1b4`); Playwright 2 runs; review-react-ui, vercel-react-best-practices; code, security and requirements reviewers. Sample data: new reservations and cancels are **not saved** until W3                                                        |
+| U3 pharmacy screens                      |   Yes   |     Yes     |   Yes    | Merged PR #4 (`460454e`); Playwright 6 runs; review-react-ui, vercel-react-best-practices; code, security and requirements reviewers. Registration, stock edits, sales and collection are **not saved** until W1–W3                                               |
+| U4 admin screens                         |   Yes   |     Yes     |   Yes    | Merged PR #5 (`05a1b67`); Playwright 4 runs; review-react-ui, vercel-react-best-practices; code, security and requirements reviewers. Decisions and catalog changes are **not saved** until W1                                                                    |
+| R1 workflow review changes               |   Yes   |     Yes     |   Yes    | Code, requirements and security reviews completed; 13 contract groups and 48 direct Playwright/Chrome journey groups at 375/1280 passed, plus lint/build. Final screenshots and results in `docs/verification.md`. Sample-only behavior; PR/merge being finalized |
+| B1 schema, RLS, functions, seed          |   Yes   |     No      |    No    |                                                                                                                                                                                                                                                                   |
+| W1 wire auth, registration, admin        |   Yes   |     No      |    No    |                                                                                                                                                                                                                                                                   |
+| W2 wire inventory, counter sale          |   Yes   |     No      |    No    |                                                                                                                                                                                                                                                                   |
+| W3 wire search, reservations, collection |   Yes   |     No      |    No    |                                                                                                                                                                                                                                                                   |
+| F demo loop and hand-in                  |   Yes   |     No      |    No    |                                                                                                                                                                                                                                                                   |
 
 ## Next task
 
-Start **R1 (workflow review changes)** on `feature/r1-review-changes`: the UI items listed in `plan.md` R1 from all three reviews, on sample data. Then **B1** on `feature/b1-schema`, whose checklist already includes D7–D21.
+Finalize the **R1 PR/merge**, then start **B1** on `feature/b1-schema`. Browser QA is complete: the user explicitly authorized direct Playwright after CUA host failures. Final evidence uses `r1-final-*` screenshots and `docs/r1-browser-results.json`; the two older `r1-basket-price-375.png` / `r1-reserved-375.png` images predate the resumed fixes.
 
-Order: U1 → U2 → U3 → U4 → B1 (backend) → W1–W3 (wire up) → F. Data-model decisions D1–D4 are already confirmed (`docs/data-model.md`).
+`npm run verify:r1` stubs only Next session/redirect plumbing and React request caching, loads the real data/action modules and uses isolated sample fixtures with a fixed Dhaka date. It does not verify browser behavior, real transactions, database idempotency or RLS. Database persistence remains intentionally deferred.
+
+B1's checklist already includes D7–D21. Keep `reservations.cancellation_reason` so the generic suspension explanation survives later shop resubmission. Direct browser checks exercise the real Next server and client interactions but cannot prove database idempotency, RLS or atomic stock changes.
+
+Order: U1 → U2 → U3 → U4 → R1 → B1 (backend) → W1–W3 (wire up) → F. Decisions D1–D21 are recorded in `docs/data-model.md`.

@@ -52,6 +52,8 @@ export default async function PharmacyDashboard() {
       <PharmacyStatusBanner
         status={pharmacy.status}
         rejectionReason={pharmacy.rejectionReason}
+        licenceExpired={pharmacy.licenceExpired}
+        licenceExpiry={pharmacy.licenceExpiry}
       />
 
       <section aria-labelledby="today-heading" className="space-y-3">

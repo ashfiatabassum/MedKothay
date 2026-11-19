@@ -6,6 +6,7 @@
 import { getCurrentUser } from "@/lib/data/session";
 import { reserveBasket } from "@/lib/data/customer";
 import { MAX_BASKET_ITEMS, MAX_UNITS_PER_ITEM } from "@/lib/constants";
+import { isUuid } from "@/lib/validation";
 
 function parseItems(raw) {
   if (!Array.isArray(raw) || raw.length === 0 || raw.length > MAX_BASKET_ITEMS)
@@ -15,24 +16,30 @@ function parseItems(raw) {
   for (const i of raw) {
     const medicineId = typeof i?.medicineId === "string" ? i.medicineId : "";
     const quantity = Number(i?.quantity);
+    // The price the customer saw (D13); only compared, never used as the price.
+    const expectedPrice = Number(i?.expectedPrice);
     if (
       !medicineId ||
       medicineId.length > 64 ||
       seen.has(medicineId) ||
       !Number.isInteger(quantity) ||
       quantity < 1 ||
-      quantity > MAX_UNITS_PER_ITEM
+      quantity > MAX_UNITS_PER_ITEM ||
+      !Number.isFinite(expectedPrice) ||
+      expectedPrice <= 0
     )
       return null;
     seen.add(medicineId);
-    items.push({ medicineId, quantity });
+    items.push({ medicineId, quantity, expectedPrice });
   }
   return items;
 }
 
 /**
- * @param {{ pharmacyId: string, items: { medicineId: string, quantity: number }[] }} payload
+ * @param {{ pharmacyId: string, requestId: string,
+ *   items: { medicineId: string, quantity: number, expectedPrice: number }[] }} payload
  * @returns {{ status: "needs-sign-in" } | { status: "not-customer" }
+ *   | { status: "price_changed", message, prices }
  *   | { status: "error", message, medicineId? } | { status: "reserved", reservation }}
  */
 export async function reserveAction(payload) {
@@ -51,8 +58,28 @@ export async function reserveAction(payload) {
     };
   }
 
-  const result = await reserveBasket({ pharmacyId, items });
+  // One id per reserve attempt, reused by the browser on retry (D14).
+  const requestId = isUuid(payload?.requestId) ? payload.requestId : null;
+  if (!requestId) {
+    return {
+      status: "error",
+      message: "Please try reserving again.",
+    };
+  }
+
+  const result = await reserveBasket({
+    customerId: user.id,
+    pharmacyId,
+    items,
+    requestId,
+  });
   if (!result.ok) {
+    if (result.code === "price_changed")
+      return {
+        status: "price_changed",
+        message: result.error,
+        prices: result.prices,
+      };
     return {
       status: "error",
       message: result.error,

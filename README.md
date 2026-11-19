@@ -2,7 +2,7 @@
 
 A pharmacy stock finder for Bangladesh. Local pharmacies run their inventory here; customers search across all of them to find which nearby shop has a medicine, and reserve it for pickup. Counter sales and online reservations share one inventory.
 
-**Status:** setup (M0). See [docs/STATUS.md](docs/STATUS.md).
+**Status:** the customer, pharmacy and admin UI and R1 workflow improvements are complete on sample data, verified at 375 px and 1280 px. Backend/persistence is next. See [docs/STATUS.md](docs/STATUS.md).
 
 ## Stack
 
@@ -15,14 +15,25 @@ Next.js 16 (App Router, JavaScript), Tailwind CSS 4, shadcn/ui, Supabase (Postgr
 3. Copy `.env.example` to `.env.local` and fill in your Supabase project URL and publishable (anon) key.
 4. `npm run dev` and open http://localhost:3000. `http://localhost:3000/api/health` should return `"supabase":"ok"`.
 
-Database migrations and seed: instructions added in M1.
+Database migrations and seed are planned in B1. Until wiring (W1–W3), account creation and mutations show demo feedback without saving data.
 
 ## Features
 
-| Feature | Status |
-| --- | --- |
-| Setup and day-one deploy | In progress |
-| Everything else | Not started; see [plan.md](plan.md) |
+| Feature                                        | Status                                     |
+| ---------------------------------------------- | ------------------------------------------ |
+| Setup and day-one deploy                       | Complete                                   |
+| Customer, pharmacy and admin UI (U1–U4)        | Complete on sample data; merged            |
+| Workflow review improvements (R1)              | Complete on sample data; browser QA passed |
+| Database and real data/auth wiring (B1, W1–W3) | Not started; see [plan.md](plan.md)        |
+
+## Verification
+
+- `npm run lint`
+- `npm run build`
+- `npm run verify:r1` — 13 deterministic, in-memory data/action contract checks; no database writes. Browser journeys at 375/1280 and real backend tests remain separate requirements.
+- `npm run verify:r1:browser` — 48 real Chrome journey groups at 375/1280. First build and start the sample app on port 3100. Requires Chrome and the `playwright` package, resolved locally or from `R1_PLAYWRIGHT_MODULE` (absolute package directory). Uses disposable browser profiles and a separate fixed-clock server on port 3101; writes results to `docs/r1-browser-results.json` and screenshots to `docs/screenshots/`. All mutations remain sample-only. Database concurrency/RLS are not tested here.
+
+Sample accounts use `demo-password` at `@medkothay.test`: `customer`, `pharmacy`, `newpharmacy`, `pending`, `rejected`, `suspended`, `expired`, `admin`.
 
 ## Agentic tools used
 

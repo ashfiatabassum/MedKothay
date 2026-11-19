@@ -2,11 +2,16 @@
 import { MapPin } from "lucide-react";
 import { RxBadge, StockBadge, VerifiedBadge } from "@/components/badges";
 import { AddToBasketButton } from "@/components/search/add-to-basket-button";
+import { ShopContact } from "@/components/shop-contact";
 import { findArea } from "@/lib/areas";
-import { formatTaka } from "@/lib/constants";
+import { formatTaka, unitOf } from "@/lib/constants";
 import { formatDistance } from "@/lib/geo";
 
-export function ResultCard({ result }) {
+/**
+ * `fromAreaName`: set when the customer picked an area instead of sharing their
+ * location, so the distance is measured from that area's centre (approximate).
+ */
+export function ResultCard({ result, fromAreaName }) {
   const { medicine: m } = result;
   const shop = {
     pharmacyId: result.pharmacyId,
@@ -19,8 +24,9 @@ export function ResultCard({ result }) {
     strength: m.strength,
     form: m.form,
     prescriptionOnly: m.prescriptionOnly,
-    unitPrice: result.sellingPrice, // display only; the server re-prices on reserve
+    unitPrice: result.sellingPrice, // shown; the server compares it on reserve (D13)
   };
+  const distance = formatDistance(result.distanceKm);
 
   return (
     <li className="rounded-xl border bg-card p-4">
@@ -40,7 +46,7 @@ export function ResultCard({ result }) {
           {formatTaka(result.sellingPrice)}
           <span className="text-xs font-normal text-muted-foreground">
             {" "}
-            / unit
+            per {unitOf(m.form)}
           </span>
         </p>
       </div>
@@ -51,21 +57,31 @@ export function ResultCard({ result }) {
         {m.prescriptionOnly && <RxBadge />}
       </div>
 
-      <div className="mt-3 flex flex-col gap-3 border-t pt-3 sm:flex-row sm:items-center sm:justify-between">
-        <div className="min-w-0 text-sm">
-          <p className="font-medium">{result.pharmacyName}</p>
-          <p className="flex items-center gap-1 text-muted-foreground">
-            <MapPin className="size-3.5 shrink-0" aria-hidden="true" />
-            <span>
-              {formatDistance(result.distanceKm)} away ·{" "}
-              {findArea(result.area)?.name ?? result.address}
-            </span>
-          </p>
+      <div className="mt-3 space-y-3 border-t pt-3">
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+          <div className="min-w-0 text-sm">
+            <p className="font-medium">{result.pharmacyName}</p>
+            <p className="flex items-center gap-1 text-muted-foreground">
+              <MapPin className="size-3.5 shrink-0" aria-hidden="true" />
+              <span>
+                {fromAreaName
+                  ? `≈ ${distance} from the centre of ${fromAreaName}`
+                  : `${distance} away`}{" "}
+                · {findArea(result.area)?.name ?? result.address}
+              </span>
+            </p>
+          </div>
+          <AddToBasketButton
+            shop={shop}
+            item={item}
+            disabled={result.stockBand === "out"}
+          />
         </div>
-        <AddToBasketButton
-          shop={shop}
-          item={item}
-          disabled={result.stockBand === "out"}
+        <ShopContact
+          name={result.pharmacyName}
+          phone={result.phone}
+          latitude={result.latitude}
+          longitude={result.longitude}
         />
       </div>
     </li>
