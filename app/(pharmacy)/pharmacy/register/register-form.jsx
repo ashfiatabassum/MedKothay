@@ -192,7 +192,11 @@ export function RegisterForm({ resubmit, initial = {}, rejectionReason }) {
               id="reg-area"
               name="area"
               required
-              defaultValue={v.area ?? ""}
+              // A mounted <select> keeps its first default, so after a failed
+              // submit (React resets the form) it is remounted with the area
+              // just submitted, staying in step with the hidden coordinates.
+              key={`area-${state.values?.area ?? "init"}`}
+              defaultValue={areaId}
               onChange={(e) => {
                 setAreaId(e.target.value);
                 setCoords(null);

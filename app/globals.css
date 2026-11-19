@@ -45,6 +45,7 @@
   --color-secondary-foreground: var(--secondary-foreground);
   --color-secondary: var(--secondary);
   --color-primary-foreground: var(--primary-foreground);
+  --color-primary-hover: var(--primary-hover);
   --color-primary: var(--primary);
   --color-popover-foreground: var(--popover-foreground);
   --color-popover: var(--popover);
@@ -69,6 +70,7 @@
   --popover-foreground: #0f172a;
   --primary: #0b5cad; /* deep medical blue */
   --primary-foreground: #ffffff;
+  --primary-hover: #094a8c; /* darker blue: white text 8.86:1 (primary/80 was 4.34:1) */
   --secondary: #e8f0fb;
   --secondary-foreground: #0b3f78;
   --muted: #eef2f8;

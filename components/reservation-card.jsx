@@ -6,7 +6,12 @@ import { Countdown } from "@/components/countdown";
 import { PickupCode } from "@/components/pickup-code";
 import { formatTaka } from "@/lib/constants";
 
-export function ReservationCard({ reservation: r, headingLevel = 2, actions }) {
+export function ReservationCard({
+  reservation: r,
+  headingLevel = 2,
+  actions,
+  onExpire,
+}) {
   const Heading = `h${headingLevel}`;
   const total = r.items.reduce((sum, i) => sum + i.quantity * i.unitPrice, 0);
   const active = r.status === "active";
@@ -38,7 +43,7 @@ export function ReservationCard({ reservation: r, headingLevel = 2, actions }) {
         <div className="space-y-2">
           <PickupCode code={r.pickupCode} />
           <div className="flex flex-wrap items-center gap-2 text-sm text-muted-foreground">
-            <Countdown expiresAt={r.expiresAt} />
+            <Countdown expiresAt={r.expiresAt} onExpire={onExpire} />
             <span>Pick up before the hold ends, or it is released.</span>
           </div>
         </div>

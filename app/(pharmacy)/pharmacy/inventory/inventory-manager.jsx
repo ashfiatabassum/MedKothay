@@ -10,6 +10,7 @@ import {
   FormField,
   TextInput,
   useFocusFirstError,
+  useReturnFocus,
 } from "@/components/form-field";
 import { EmptyState } from "@/components/states";
 import { Badge } from "@/components/ui/badge";
@@ -33,7 +34,15 @@ function Saved({ text }) {
   );
 }
 
-function StockFields({ idPrefix, errors, defaults = {} }) {
+// `editing`: existing stock may have a past expiry (it can be corrected or set
+// to 0); new stock must expire in the future.
+function StockFields({
+  idPrefix,
+  errors,
+  defaults = {},
+  editing = false,
+  autoFocus = false,
+}) {
   return (
     <div className="grid gap-3 sm:grid-cols-3">
       <FormField
@@ -43,6 +52,7 @@ function StockFields({ idPrefix, errors, defaults = {} }) {
       >
         {(a) => (
           <TextInput
+            autoFocus={autoFocus}
             id={`${idPrefix}-qty`}
             name="quantity"
             type="number"
@@ -84,7 +94,7 @@ function StockFields({ idPrefix, errors, defaults = {} }) {
             id={`${idPrefix}-exp`}
             name="expiryDate"
             type="date"
-            min={today()}
+            min={editing ? undefined : today()}
             required
             defaultValue={defaults.expiryDate ?? ""}
             {...a}
@@ -97,6 +107,7 @@ function StockFields({ idPrefix, errors, defaults = {} }) {
 
 function InventoryRow({ row }) {
   const [editing, setEditing] = useState(false);
+  const editButtonRef = useReturnFocus(editing);
   const [state, formAction, pending] = useActionState(updateStockAction, {
     status: "idle",
   });
@@ -176,6 +187,8 @@ function InventoryRow({ row }) {
             idPrefix={prefix}
             errors={errors}
             defaults={state.values ?? row}
+            editing
+            autoFocus
           />
           {row.heldQuantity > 0 && (
             <p className="text-xs text-muted-foreground">
@@ -199,7 +212,11 @@ function InventoryRow({ row }) {
           {state.status === "saved" && <Saved text="Changes accepted." />}
         </form>
       ) : (
-        <Button variant="outline" onClick={() => setEditing(true)}>
+        <Button
+          ref={editButtonRef}
+          variant="outline"
+          onClick={() => setEditing(true)}
+        >
           <Pencil aria-hidden="true" />
           Edit stock
         </Button>
@@ -210,6 +227,7 @@ function InventoryRow({ row }) {
 
 function AddStock({ catalog }) {
   const [open, setOpen] = useState(false);
+  const addButtonRef = useReturnFocus(open);
   const [state, formAction, pending] = useActionState(addStockAction, {
     status: "idle",
   });
@@ -219,7 +237,7 @@ function AddStock({ catalog }) {
 
   if (!open) {
     return (
-      <Button onClick={() => setOpen(true)}>
+      <Button ref={addButtonRef} onClick={() => setOpen(true)}>
         <Plus aria-hidden="true" />
         Add medicine
       </Button>
@@ -243,6 +261,7 @@ function AddStock({ catalog }) {
         <FormField id="add-med" label="Medicine" error={errors.medicineId}>
           {(a) => (
             <select
+              autoFocus
               id="add-med"
               name="medicineId"
               required

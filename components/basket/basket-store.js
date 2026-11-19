@@ -2,6 +2,8 @@
 // useSyncExternalStore. Cached so getSnapshot returns the same object until
 // the basket changes (a requirement of useSyncExternalStore). Also follows
 // changes made in other tabs via the "storage" event.
+import { MAX_BASKET_ITEMS } from "@/lib/constants";
+
 const KEY = "mk-basket-v1";
 const listeners = new Set();
 let cache; // undefined = not read yet; null = empty basket
@@ -19,7 +21,7 @@ function isValidBasket(b) {
     typeof b.address === "string" &&
     Array.isArray(b.items) &&
     b.items.length > 0 &&
-    b.items.length <= 20 &&
+    b.items.length <= MAX_BASKET_ITEMS &&
     b.items.every(
       (i) =>
         i !== null &&

@@ -46,7 +46,7 @@ export function RxBadge({ className }) {
 }
 
 const RESERVATION_CLASSES = {
-  active: "bg-highlight-soft text-highlight-foreground",
+  active: "bg-secondary text-secondary-foreground", // amber is only for pickup code + timer
   collected: "bg-in-stock text-in-stock-foreground",
   cancelled: "bg-out-of-stock text-out-of-stock-foreground",
   expired: "bg-out-of-stock text-out-of-stock-foreground",

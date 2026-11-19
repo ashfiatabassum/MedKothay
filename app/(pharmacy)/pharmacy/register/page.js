@@ -4,13 +4,13 @@ import { PageHeading } from "@/components/area-shell";
 import { EmptyState } from "@/components/states";
 import { buttonVariants } from "@/components/ui/button";
 import { getMyPharmacy } from "@/lib/data/pharmacy";
-import { getCurrentUser } from "@/lib/data/session";
+import { requireRole } from "@/lib/data/session";
 import { RegisterForm } from "./register-form";
 
 export const metadata = { title: "Register your pharmacy" };
 
 export default async function RegisterPage() {
-  const user = await getCurrentUser();
+  const user = await requireRole("pharmacist"); // not only the layout
   const pharmacy = await getMyPharmacy(user);
   const resubmit = pharmacy?.status === "rejected";
 
