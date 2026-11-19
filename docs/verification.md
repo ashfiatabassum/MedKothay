@@ -1,5 +1,42 @@
 # Verification log
 
+## B1 start — 19 November 2026 (Codex)
+
+The user authorized Supabase changes and starting B1. Work is on `feature/b1-schema` against linked production project `gkzqlpaknytdvbbknaxp`. This is a partial milestone; the UI still uses sample data.
+
+| Check                                              | Observed result                                                                                                                                                                                                                      | Status                                                             |
+| -------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | ------------------------------------------------------------------ |
+| Security advisor before fix                        | Two warnings: `public.rls_auto_enable()` executable by `anon` and `authenticated`                                                                                                                                                    | Confirmed                                                          |
+| Trigger inspection                                 | `ensure_rls` is an enabled `ddl_command_end` event trigger owned by `postgres`; function is `SECURITY DEFINER`, and its ACL explicitly granted client execution                                                                      | Confirmed                                                          |
+| `restrict_rls_auto_enable_execute`                 | Remote migration applied after dry run. `anon`/`authenticated` execute = false, `service_role` execute = true; trigger remains present                                                                                               | Pass                                                               |
+| `core_schema`                                      | Remote migration applied after dry run. Eight intended tables present, all RLS enabled; `anon`/`authenticated` had no table SELECT grant before policies                                                                             | Pass                                                               |
+| `access_policies`                                  | Remote migration applied after dry run. Only catalog has anon SELECT grant; private tables are readable through RLS only to signed-in participants. Signup trigger enabled; its function and admin helper are not executable by anon | Pass for catalog/grant inspection; role behavior still needs tests |
+| Remote security advisor after all three migrations | `No issues found`                                                                                                                                                                                                                    | Pass                                                               |
+| Role, signup, concurrency and stock RPC tests      | Functions/seed not yet present; no real signup or role impersonation performed                                                                                                                                                       | Not run — remaining B1 work                                        |
+
+### Skill usage log (B1)
+
+| Skill                                        | Work / result                                                                                                                                                                              |
+| -------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `supabase` (project)                         | Read v3 CLI help and current Supabase changelog/RLS/migration docs; used `db query --remote --read-only`, migration dry runs and remote pushes; verified applied state and advisor results |
+| `supabase-postgres-best-practices` (project) | Applied least-privilege grants, constraints, FK indexes and RLS from first table creation                                                                                                  |
+| `review-supabase-model` (project)            | Checked one stock row per shop/medicine, no public exact stock grants, one basket with many items, request-ID uniqueness and no user metadata in authorization                             |
+
+### Issues and corrections log (B1)
+
+| Issue                                                          | Source / detection                                   | Correction                                                          |
+| -------------------------------------------------------------- | ---------------------------------------------------- | ------------------------------------------------------------------- |
+| Existing event-trigger function callable by client roles       | Remote security advisor and `pg_proc` ACL inspection | Revoked client EXECUTE in versioned migration; advisor now clean    |
+| Documentation patch missed a Prettier-aligned STATUS table row | Codex patch verification                             | Patch made no change; used exact row replacement and formatted docs |
+
+Role impersonation attempt: CLI `db query --read-only` rejected `SET LOCAL ROLE` as a non-SELECT statement before execution; no database change. Role behavior remains for the planned SQL tests.
+
+### Next B1 work
+
+Implement registration, owner correction, admin approval/rejection/suspension and catalog usage RPCs, then transactional stock/search/reservation/sale RPCs. Add private licence storage and seed. Run SQL role tests, last-unit and overlapping-basket concurrency tests, and advisors before marking B1 complete or merging. The three applied migrations must never be edited; add a new migration to correct any issue.
+
+---
+
 Record **observed** results only. A planned test is not a pass. Use test accounts and seed data; no real customer data in screenshots or commits.
 
 ## Environment
