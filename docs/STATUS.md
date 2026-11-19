@@ -1,7 +1,7 @@
 # Project status and next handoff
 
 **Updated:** 19 November 2026
-**Phase:** M0 and the UI phase complete and live. **Workflow reviews in progress:** pharmacy review accepted (decisions D7–D12); customer and admin reviews pending. Then R1 (small UI changes) and **B1 (backend)**.
+**Phase:** M0 and the UI phase complete and live. **Workflow reviews in progress:** pharmacy (D7–D12) and customer (D13–D16) reviews accepted; admin review pending. Then R1 (small UI changes) and **B1 (backend)**.
 
 - Live: https://med-kothay.vercel.app (auto-deploys from `main`)
 - Repo: https://github.com/ashfiatabassum/MedKothay (public)
@@ -20,6 +20,7 @@
 - Demo accounts (password `demo-password`, all `@medkothay.test`): `customer`, `pharmacy` (approved Lazz Pharma), `newpharmacy` (no shop yet: step 2), `pending` (Green Life, pending), `rejected` (MediCare Point, rejected with a reason), `admin`.
 - Pharmacy registration (D6, 18 Nov): shop name, address, area, map location, shop phone, DGDA licence number, licence photo (≤ 5 MB, checked by content; server action body limit 6 MB), licence expiry; status banner on the dashboard; two emails from W1 (developer will set up a Gmail app password).
 - Theme (18 Nov): white and deep blue `#0B5CAD`, blue-white background, amber accent for pickup code and countdown (`CLAUDE.md` "Theme").
+- Customer workflow review (19 Nov), accepted: D13 price check before holding; D14 safe retry with a request id; D15 at most 3 active reservations per customer; D16 fallback shows 3 distinct shops; plus wording and small UI fixes (in R1).
 - Pharmacy workflow review (19 Nov), accepted: D7 resubmit same shop; D8 reservation item price snapshot; D9 expired stock unavailable; D10 expired holds released in every stock function; D11 unit follows the form; D12 shops with an expired licence leave search. Details in `docs/data-model.md`.
 - Data model decisions D1–D4 (18 Nov): sign-up offers customer or pharmacy owner, but the role is written by the database; licence photos in a private bucket; location from the browser or an area picker, 5 km radius; **one reservation = one shop, many medicines, one pickup code** (new `reservation_items` table). Details in `docs/data-model.md`.
 - Agentic tooling: Prettier PostToolUse hook; skills `grill-me`/`grilling`, `supabase` + `supabase-postgres-best-practices` + project `review-supabase-model`, `vercel-react-best-practices` + project `review-react-ui`; subagents `code-reviewer`, `security-reviewer`, `requirements-reviewer`; Playwright MCP.

@@ -83,7 +83,8 @@ mobile app.
 - Messages never reveal what kind of account an email belongs to:
   "An account with this email already exists. Sign in instead." and
   "Email or password is incorrect."
-- After sign-in: customer → search, pharmacy → dashboard, admin → admin pages.
+- After sign-in: customer → search (or back to where they came from, e.g. the
+  basket after Reserve), pharmacy → dashboard, admin → admin pages.
 - Email confirmation is **off** for the demo. No "forgot password" for now.
 - Admin is never offered; it is set once by hand with SQL
 
@@ -258,8 +259,14 @@ This is what customers see and what the counter may sell. Never let it go negati
   so ("৳12 per tablet"). No separate unit column.
 
 **Reservation**
-- One reservation = one shop, one or more medicines (1 to 5 units each), one
+- One reservation = one shop, one to 20 medicines (1 to 5 units each), one
   pickup code, one status. A basket can never mix shops.
+- **Price check (D13):** reserving sends the prices the customer saw; if any
+  changed, nothing is held and the customer confirms the new prices first.
+- **Safe retry (D14):** each Reserve press carries a request id; the same id
+  twice returns the same reservation instead of a second one.
+- **At most 3 active reservations per customer (D15)**, enforced in the
+  database with a clear message.
 - Holding for 30 minutes from creation
 - A 6-digit pickup code is generated on creation
 - Creating a reservation increases `held_quantity` for every item; it does not
@@ -302,7 +309,8 @@ This is what customers see and what the counter may sell. Never let it go negati
 - Sort results by distance ascending
 - Location: browser geolocation, or the centre of an area the customer picks
 - Radius 5 km. If no shop within it has the medicine, say so and show the
-  nearest shops further away, clearly labelled as outside 5 km
+  nearest **3 distinct pharmacies** further away (with all their matching
+  medicines), clearly labelled as outside 5 km (D16)
 
 ---
 
