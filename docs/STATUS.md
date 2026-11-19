@@ -1,7 +1,7 @@
 # Project status and next handoff
 
 **Updated:** 19 November 2026
-**Phase:** M0 and the UI phase U1–U3 complete and live. **U4 (admin screens) built and verified on `feature/u4-admin`; pull request open.** After it merges, the UI phase is complete and **B1 (backend)** starts.
+**Phase:** M0 and the **UI phase (U1, U1b, U2, U3, U4) complete and live** (last merge PR #5, `05a1b67`). Next: **B1 (backend)**.
 
 - Live: https://med-kothay.vercel.app (auto-deploys from `main`)
 - Repo: https://github.com/ashfiatabassum/MedKothay (public)
@@ -32,7 +32,7 @@
 | U1b header and accounts UI | Yes | Yes | Yes | Merged PR #2 (`34d1f42`); Playwright 2 runs, review-react-ui, code-reviewer, security-reviewer |
 | U2 customer screens | Yes | Yes | Yes | Merged PR #3 (`26be1b4`); Playwright 2 runs; review-react-ui, vercel-react-best-practices; code, security and requirements reviewers. Sample data: new reservations and cancels are **not saved** until W3 |
 | U3 pharmacy screens | Yes | Yes | Yes | Merged PR #4 (`460454e`); Playwright 6 runs; review-react-ui, vercel-react-best-practices; code, security and requirements reviewers. Registration, stock edits, sales and collection are **not saved** until W1–W3 |
-| U4 admin screens | Yes | Yes | Yes | PR open; Playwright 4 runs; review-react-ui, vercel-react-best-practices; code, security and requirements reviewers. Decisions and catalog changes are **not saved** until W1 |
+| U4 admin screens | Yes | Yes | Yes | Merged PR #5 (`05a1b67`); Playwright 4 runs; review-react-ui, vercel-react-best-practices; code, security and requirements reviewers. Decisions and catalog changes are **not saved** until W1 |
 | B1 schema, RLS, functions, seed | Yes | No | No | |
 | W1 wire auth, registration, admin | Yes | No | No | |
 | W2 wire inventory, counter sale | Yes | No | No | |
