@@ -16,7 +16,7 @@ import {
 } from "@/lib/data/pharmacy";
 import { findArea } from "@/lib/areas";
 import { MAX_SALE_LINES } from "@/lib/constants";
-import { checkFullName, normalizeBdPhone } from "@/lib/validation";
+import { checkFullName, isUuid, normalizeBdPhone } from "@/lib/validation";
 
 const text = (fd, name) => String(fd.get(name) ?? "").trim();
 
@@ -27,6 +27,13 @@ async function ownPharmacy() {
   const pharmacy = await getMyPharmacy(user);
   if (!pharmacy) return { user, error: "Register your pharmacy first." };
   return { user, pharmacy };
+}
+
+// Inventory, counter and dashboard all show the same stock rows.
+function refreshStockPages() {
+  revalidatePath("/pharmacy");
+  revalidatePath("/pharmacy/inventory");
+  revalidatePath("/pharmacy/counter");
 }
 
 // Whole numbers only: "" , "1e2" and "0x10" are rejected (Number() would accept them).
@@ -162,7 +169,7 @@ export async function addStockAction(_prev, fd) {
     expiryDate: text(fd, "expiryDate"),
   };
   const e = {};
-  if (!medicineId) e.medicineId = "Choose a medicine.";
+  if (!isUuid(medicineId)) e.medicineId = "Choose a medicine.";
   if (quantity === null) e.quantity = "Enter a whole number from 0 to 100000.";
   if (sellingPrice === null)
     e.sellingPrice = "Enter a price in taka, like 12 or 12.50.";
@@ -175,6 +182,7 @@ export async function addStockAction(_prev, fd) {
     sellingPrice,
     expiryDate,
   });
+  if (r.ok) refreshStockPages();
   return r.ok
     ? { status: "saved" }
     : { status: "error", formError: r.error, values };
@@ -184,6 +192,11 @@ export async function updateStockAction(_prev, fd) {
   const own = await ownPharmacy();
   if (own.error) return { status: "error", formError: own.error };
   const medicineId = text(fd, "medicineId");
+  if (!isUuid(medicineId))
+    return {
+      status: "error",
+      formError: "This medicine is not in your stock.",
+    };
   const quantity = intIn(fd.get("quantity"), 0, 100_000);
   const sellingPrice = priceOk(fd.get("sellingPrice"));
   // Editing existing stock accepts a past expiry, so expired stock can still be
@@ -212,6 +225,7 @@ export async function updateStockAction(_prev, fd) {
     return r.field
       ? { status: "error", fieldErrors: { [r.field]: r.error }, values }
       : { status: "error", formError: r.error, values };
+  refreshStockPages();
   return { status: "saved" };
 }
 
@@ -232,7 +246,7 @@ export async function completeSaleAction(payload) {
     const medicineId =
       typeof i?.medicineId === "string" ? i.medicineId.slice(0, 64) : "";
     const quantity = intIn(i?.quantity, 1, 1000);
-    if (!medicineId || quantity === null || seen.has(medicineId))
+    if (!isUuid(medicineId) || quantity === null || seen.has(medicineId))
       return {
         status: "error",
         message: "Check the quantities and try again.",
@@ -243,6 +257,7 @@ export async function completeSaleAction(payload) {
   if (items.length === 0)
     return { status: "error", message: "Add at least one medicine." };
   const r = await completeSale({ pharmacyId: own.pharmacy.id, items });
+  if (r.ok) refreshStockPages();
   return r.ok
     ? { status: "sold", total: r.total }
     : { status: "error", message: r.error, medicineId: r.medicineId };

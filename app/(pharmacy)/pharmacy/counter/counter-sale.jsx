@@ -108,9 +108,6 @@ export function CounterSale({ stock }) {
         <SuccessHeading>
           Sale complete · {formatTaka(result.total)}
         </SuccessHeading>
-        <p className="rounded-md bg-muted px-3 py-2 text-xs text-muted-foreground">
-          Demo: sales and stock changes are saved from step W2.
-        </p>
         <Button
           onClick={() => {
             setResult(null);
