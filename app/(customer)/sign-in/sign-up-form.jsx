@@ -1,6 +1,6 @@
 "use client";
 
-import { useActionState, useRef } from "react";
+import { useActionState, useRef, useState } from "react";
 import Link from "next/link";
 import { CircleCheck, Search, Store } from "lucide-react";
 import {
@@ -37,6 +37,7 @@ export function SignUpForm({ defaultType, next, signInHref = "/sign-in" }) {
     status: "idle",
   });
   const formRef = useRef(null);
+  const [picked, setPicked] = useState(null); // the type chosen on this page
   useFocusFirstError(
     formRef,
     state,
@@ -76,10 +77,16 @@ export function SignUpForm({ defaultType, next, signInHref = "/sign-in" }) {
 
   const errors = state.fieldErrors ?? {};
   const v = state.values ?? {};
-  const type = v.accountType || defaultType;
+  const type = picked ?? (v.accountType || defaultType);
+  const owner = type === "pharmacy";
 
   return (
     <form ref={formRef} action={formAction} noValidate className="space-y-5">
+      {owner && (
+        <p className="text-sm font-medium text-primary">
+          Step 1 of 2: your account. Next, your pharmacy&apos;s details.
+        </p>
+      )}
       <p className="text-sm text-muted-foreground">All fields are required.</p>
       {state.formError && (
         <p
@@ -122,7 +129,8 @@ export function SignUpForm({ defaultType, next, signInHref = "/sign-in" }) {
                 type="radio"
                 name="accountType"
                 value={value}
-                defaultChecked={type === value}
+                checked={type === value}
+                onChange={() => setPicked(value)}
                 className="sr-only"
               />
               <Icon
@@ -145,7 +153,11 @@ export function SignUpForm({ defaultType, next, signInHref = "/sign-in" }) {
         )}
       </fieldset>
 
-      <FormField id="signup-name" label="Full name" error={errors.fullName}>
+      <FormField
+        id="signup-name"
+        label={owner ? "Owner's full name" : "Full name"}
+        error={errors.fullName}
+      >
         {(a11y) => (
           <TextInput
             id="signup-name"
@@ -195,7 +207,7 @@ export function SignUpForm({ defaultType, next, signInHref = "/sign-in" }) {
 
       <FormField
         id="signup-phone"
-        label="Mobile number"
+        label={owner ? "Your mobile number" : "Mobile number"}
         hint="Bangladeshi mobile, like 01712-345678."
         error={errors.phone}
       >

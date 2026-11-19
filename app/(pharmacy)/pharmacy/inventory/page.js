@@ -1,13 +1,24 @@
-import { ComingSoon } from "@/components/coming-soon";
+import { PageHeading } from "@/components/area-shell";
+import { getCatalogNotStocked, getInventory } from "@/lib/data/pharmacy";
+import { requireMyPharmacy } from "../require-pharmacy";
+import { InventoryManager } from "./inventory-manager";
 
 export const metadata = { title: "Inventory" };
 
-export default function Page() {
+export default async function InventoryPage() {
+  const { pharmacy } = await requireMyPharmacy();
+  const [rows, catalog] = await Promise.all([
+    getInventory(pharmacy.id),
+    getCatalogNotStocked(pharmacy.id),
+  ]);
+
   return (
-    <ComingSoon
-      title="Inventory"
-      step="U3"
-      description="Add medicines from the catalog, set quantity, price and expiry, and adjust stock."
-    />
+    <>
+      <PageHeading
+        title="Inventory"
+        description="One stock for counter sales and online reservations. Reserved units can't be sold at the counter."
+      />
+      <InventoryManager rows={rows} catalog={catalog} />
+    </>
   );
 }

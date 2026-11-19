@@ -115,3 +115,22 @@ export function useFocusFirstError(formRef, state, fallbackSelector) {
     target?.focus();
   }, [formRef, state, fallbackSelector]);
 }
+
+/**
+ * A status or alert message that takes focus when it appears, so keyboard and
+ * screen-reader users are not left on <body> after a form re-renders. Give it a
+ * `key` that changes with the message to move focus again for a new message.
+ */
+export function FocusMessage({ role = "status", className, children }) {
+  const ref = useFocusOnMount();
+  return (
+    <p
+      ref={ref}
+      tabIndex={-1}
+      role={role}
+      className={cn("focus:outline-none", className)}
+    >
+      {children}
+    </p>
+  );
+}
