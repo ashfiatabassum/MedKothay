@@ -131,6 +131,7 @@ export async function registerPharmacyAction(_prev, fd) {
 
   const result = await registerPharmacy({
     user,
+    photo: fd.get("licencePhoto"),
     ...v,
     lat,
     lng,
