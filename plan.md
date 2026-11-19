@@ -2,7 +2,7 @@
 
 Deadline: 3 days from 18 November 2026. **Order (decided 18 Nov): UI first with sample data, then the backend, then wire them together.**
 
-M0 → U1 → U1b → U2 → U3 → U4 → B1 → W1 → W2 → W3 → F
+M0 → U1 → U1b → U2 → U3 → U4 → R1 → B1 → W1 → W2 → W3 → F
 
 Each milestone after M0 is one branch (`feature/<id>-<name>`, for example `feature/u1-foundation`) merged by pull request. Follow the feature loop in `CLAUDE.md`. Tick a box only after it was checked in the running app and recorded in `docs/verification.md`.
 
@@ -79,6 +79,15 @@ Fields and status decided 18 Nov (D6). A second demo pharmacy account without a 
 
 **Done when:** approve and reject flows work on mock data; the pending list empty state shows. **Met 19 Nov** (Playwright U4 runs 1–4; the empty state is reached by searching the pending tab, because decisions are not saved until W1).
 
+## R1: Workflow review changes (UI, before B1)
+
+From the external workflow reviews (pharmacy accepted 19 Nov; customer and admin to follow).
+
+- [ ] "Expired" badge in owner inventory; expired rows shown as unavailable (D9)
+- [ ] Unit wording everywhere: "per tablet / capsule / bottle / vial" (D11)
+- [ ] Resubmit flow wording for rejected and expired-licence shops (D7, D12)
+- [ ] Wording fixes from the review (photo hint, "Shop location", Rx check, missing medicine, Verified tooltip)
+
 ## B1: Backend (schema, RLS, stock functions, seed)
 
 Decisions D1–D4 are confirmed in `docs/data-model.md` (role choice at sign-up; private licence bucket; geolocation or area picker with 5 km radius; multi-medicine reservations). Function return shapes must match `lib/mock-data.js`; if they cannot, change both and record why.
@@ -86,6 +95,7 @@ Decisions D1–D4 are confirmed in `docs/data-model.md` (role choice at sign-up;
 - [ ] Migrations for all tables in `CLAUDE.md` "Data model" (including `reservation_items`), with CHECK constraints and indexes
 - [ ] `profiles` row created by an `auth.users` trigger from the sign-up account type (`customer` → customer, `pharmacy` → pharmacist, anything else → customer; D5); `full_name` and `phone` saved; role and `pharmacy_id` not user-editable
 - [ ] Reservation functions refuse non-customer callers (pharmacy accounts cannot reserve)
+- [ ] Workflow review (D7–D12): `resubmit_pharmacy` RPC (same row, back to pending, owner only, rejected only); `reservation_items.unit_price` set in `reserve`; expired stock (expiry_date < today Dhaka) = available 0 in search, reserve and sale; every stock function releases expired holds first; search excludes shops with expired licences
 - [ ] Admin (security review U4): `approve_pharmacy(id)` / `reject_pharmacy(id, reason)` as `SECURITY DEFINER`, `search_path = ''`, admin check on `auth.uid()` inside, `update … where id = $1 and status = 'pending'` (error if no row), reason 10–300 in SQL, `EXECUTE` revoked from `public`/`anon`; pharmacists can't update `status`, `rejection_reason` or licence columns; `medicines` insert/update admin-only (`USING` + `WITH CHECK` from `profiles.role`), unique `(lower(brand_name), replace(lower(strength),' ',''), form)`, CHECKs for form list and lengths; latitude/longitude range CHECKs; phone format CHECK
 - [ ] Sign-up trigger (security review, U1b): `SECURITY DEFINER`, `SET search_path = ''`, INSERT only; reads **only** `account_type` (exactly `'pharmacy'` → pharmacist, anything else → customer), `full_name` (length-capped) and `phone` (format-checked) from metadata; never copies `role`, `pharmacy_id` or `status`; no `user_metadata` anywhere in RLS
 - [ ] `register_pharmacy` locks the caller's profile (`FOR UPDATE`) so two concurrent calls create one shop; reservation functions check `role = 'customer'` (not `<> 'pharmacist'`); `REVOKE EXECUTE ... FROM PUBLIC, anon` on every RPC that needs a signed-in user; no pharmacy policy uses `coalesce`/`IS NOT DISTINCT FROM` on `pharmacy_id` (a pharmacist without a shop must see nothing)
@@ -95,7 +105,7 @@ Decisions D1–D4 are confirmed in `docs/data-model.md` (role choice at sign-up;
 - [ ] Functions: `search_medicine` (5 km + nearest-outside fallback), `reserve` (basket, all or nothing, lock order by `medicine_id`), `cancel_reservation`, `collect_reservation` (pickup code), `complete_sale`, lazy expiry
 - [ ] Seed: ~100 Bangladeshi medicines, 6-8 Dhaka pharmacies (one pending), varied stock, area centre points
 
-**Done when:** advisors clean; SQL tests per role pass, including: two customers racing for the last unit (exactly one succeeds); a basket where one item is short (nothing held, short item named); two overlapping baskets at once (no deadlock); a sale blocked by holds; a user cannot set their own role; a direct `/auth/v1/signup` with `{account_type:'admin', role:'admin', pharmacy_id:…}` gives a `customer` with no pharmacy; a pharmacist calling `reserve` is refused; two concurrent `register_pharmacy` calls give one shop; `docs/data-model.md` matches the migrations.
+**Done when:** advisors clean; SQL tests per role pass, including: two customers racing for the last unit (exactly one succeeds); a basket where one item is short (nothing held, short item named); two overlapping baskets at once (no deadlock); a sale blocked by holds; a user cannot set their own role; an expired hold is released before a sale of those units; expired stock is not found by search and cannot be reserved or sold; a shop with a past licence_expiry is not in search; a price change after reserving does not change the reservation's total; a direct `/auth/v1/signup` with `{account_type:'admin', role:'admin', pharmacy_id:…}` gives a `customer` with no pharmacy; a pharmacist calling `reserve` is refused; two concurrent `register_pharmacy` calls give one shop; `docs/data-model.md` matches the migrations.
 
 ## W1: Wire auth, registration and admin
 

@@ -98,6 +98,9 @@ mobile app.
   received, under review" on registering, and the approve/reject result. Email
   is best effort; a failed email never blocks the registration or decision.
 - Status is `pending` until an admin approves; pending shops are invisible to customers
+- A **rejected** shop can be corrected and resubmitted: the same shop row is
+  updated (and its photo replaced), the reason is cleared and it returns to
+  `pending` (D7)
 - Inventory: add a medicine from the catalog with quantity, selling price, expiry date
 - Edit and adjust stock
 - Counter sale: search by brand or generic, add items, complete sale, stock deducts
@@ -212,6 +215,7 @@ reservation_items               -- the medicines in a reservation
   reservation_id    uuid references reservations
   medicine_id       uuid references medicines
   quantity          integer     -- 1 to 5
+  unit_price        numeric     -- selling price copied when reserved (D8)
   UNIQUE (reservation_id, medicine_id)
 
 sales                           -- counter sales
@@ -246,6 +250,12 @@ This is what customers see and what the counter may sell. Never let it go negati
 - `available_quantity` 6 or more → "In stock"
 - Customers never see the exact number, only the band
 - Customers never see purchase price (we do not store one)
+- **Expired stock is unavailable (D9):** a row whose `expiry_date` is before
+  today (Asia/Dhaka) counts as available 0 everywhere: hidden from search,
+  cannot be reserved or sold. The owner sees it marked "Expired" and can edit it.
+- **Unit follows the form (D11):** quantity and price are per tablet / capsule
+  (one piece), per bottle (syrup) or per vial (injection), and every screen says
+  so ("৳12 per tablet"). No separate unit column.
 
 **Reservation**
 - One reservation = one shop, one or more medicines (1 to 5 units each), one
@@ -257,6 +267,8 @@ This is what customers see and what the counter may sell. Never let it go negati
 - **All or nothing:** it is created only if every item has
   `available_quantity >= requested quantity`. Otherwise nothing is held and the
   customer is told which item is short.
+- Each item stores the price at the moment of reserving (`unit_price`, D8); a
+  later price change does not alter an existing reservation
 - Collection applies to the whole reservation: for every item, decrease both
   `quantity` and `held_quantity`. No partial pickup.
 - Cancellation or expiry applies to the whole reservation: decrease
@@ -267,6 +279,10 @@ This is what customers see and what the counter may sell. Never let it go negati
   so two overlapping baskets cannot deadlock.
 - Expiry is checked lazily: treat a reservation as expired when `expires_at` has
   passed. Do not write a cron job.
+- **Every** stock function (reserve, counter sale, collect, cancel, and the
+  search read) first releases this pharmacy's expired holds for the rows it
+  touches, in the same transaction, so a displayed "Expired" and the sellable
+  count always agree (D10)
 
 **Counter sale**
 - The pharmacist may only sell up to `available_quantity`
@@ -275,7 +291,9 @@ This is what customers see and what the counter may sell. Never let it go negati
   saying how many units are reserved
 
 **Visibility**
-- Only `status = 'approved'` pharmacies appear in customer search
+- Only `status = 'approved'` pharmacies **whose licence has not expired**
+  (`licence_expiry` on or after today, Asia/Dhaka) appear in customer search.
+  Checked on every read, not by a background job (D12)
 - Pending and rejected pharmacies are invisible to customers but their owners can
   still sign in and prepare their inventory
 
