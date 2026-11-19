@@ -77,7 +77,16 @@ The earlier browser-host blocker was resolved by the user's explicit authorizati
 
 Coverage includes signed-out search/keyboard/error focus; denied location; Napa/Seclo/zzz and three-distinct-shop fallback; single-shop basket conflict; sign-in and customer/pharmacy signup (including Bangla phone digits); short-stock failure; price confirmation, pickup deadline, timer expiry, basket clearing, cancellation and suspension explanation; Rx notes; owner inventory/expired rows; held-stock counter refusal; wrong/right pickup codes; correction preserving saved coordinates for rejected/suspended/expired owners; shop-B reservation isolation; admin duplicate/history, approve/reject/suspend, expired approval refusal and shared-catalog edit confirmation. Failed Reserve retains its request ID after reload; a delayed successful response preserves a replacement basket from another tab. Anonymous protected routes and pharmacist reserve refusal also passed.
 
-Final `npm run lint`, `npm run build`, `npm run verify:r1` and `git diff --check` passed. R1 checklist is ticked. Merge through its PR, record the merge/deployment below, then start B1. No real persistence, emails, licence storage, database concurrency, database idempotency or RLS were certified by these sample-data checks.
+Final `npm run lint`, `npm run build`, `npm run verify:r1` and `git diff --check` passed. R1 checklist is ticked. Merged through PR #7; merge/deployment details below. Next is B1. No real persistence, emails, licence storage, database concurrency, database idempotency or RLS were certified by these sample-data checks.
+
+### Merge and production verification
+
+- [PR #7](https://github.com/ashfiatabassum/MedKothay/pull/7), reviewed head `0197c5d`, merged 19 November 2026 at 09:25 UTC as `2c8718359cb940ea42510d2269656b5361dec277`. Feature branch deleted; local `main` fast-forwarded.
+- Vercel preview and production commit statuses both succeeded. The preview URL redirected to Vercel sign-in, so no preview UI pass is claimed. Production deployment: [Vercel build](https://vercel.com/ashfia-tabassum/med-kothay/Bkq3CkzALra56cDtfqfLAzu5uKwi).
+- Real Chrome smoke checks on https://med-kothay.vercel.app passed 10/10: home (44 px area picker), Napa search (units/directions), customer reservations (pharmacy unavailable), owner inventory (expired unavailable) and admin approved-shop suspension control at both 375 and 1280. No page/console errors or horizontal overflow observed. This is deployment smoke coverage; the full 48 groups ran locally against the production build.
+- `/api/health` returned HTTP 200 with `{"app":"ok","supabase":"ok"}`. This checks connectivity only, not schema or RLS.
+- Initial smoke-harness locators used visible captions rather than the fuller accessible names for Directions/Expired, and the home check briefly encountered streamed duplicate markup. Corrected selectors and waited for a single picker; final smoke run passed without app changes.
+- B1 remains unstarted. Implement the schema/RLS/transactional RPC checklist before wiring real auth, stock and reservations in W1?W3.
 
 ## M0 setup checks
 
