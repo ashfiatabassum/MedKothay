@@ -88,8 +88,15 @@ mobile app.
 - Admin is never offered; it is set once by hand with SQL
 
 **Pharmacy**
-- Register: shop name, address, area, lat/lng, phone, DGDA licence number,
-  licence photo, licence expiry date
+- Register (step 2 of 2 after creating a pharmacy account; fields decided 18 Nov):
+  shop name, address, area (from the list), map location (starts at the area
+  centre; "use my current location" to adjust), shop phone, DGDA licence number,
+  licence photo (JPEG/PNG/WebP, max 5 MB), licence expiry date
+- **Status shown in the app and by email (D6):** the pharmacy dashboard shows a
+  banner for pending / rejected (with the admin's reason) / approved. Two emails
+  (from W1, via a Gmail app password set by the developer): "registration
+  received, under review" on registering, and the approve/reject result. Email
+  is best effort; a failed email never blocks the registration or decision.
 - Status is `pending` until an admin approves; pending shops are invisible to customers
 - Inventory: add a medicine from the catalog with quantity, selling price, expiry date
 - Edit and adjust stock
