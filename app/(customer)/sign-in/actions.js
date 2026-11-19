@@ -71,7 +71,7 @@ export async function signUpAction(_prev, formData) {
     fullName,
     email,
     password,
-    phone: phone.value,
+    phone: phone.value.slice(3),
   });
   if (!result.ok) {
     return {

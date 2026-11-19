@@ -8,6 +8,7 @@
     "start": "next start",
     "lint": "eslint",
     "verify:b1": "node scripts/verify-b1.mjs",
+    "verify:w1:browser": "node scripts/verify-w1-browser.mjs",
     "verify:r1": "node --experimental-vm-modules scripts/verify-r1.mjs",
     "verify:r1:browser": "node scripts/verify-r1-browser.mjs"
   },
@@ -19,6 +20,7 @@
     "cn": "^0.5.2",
     "lucide-react": "^1.75.0",
     "next": "16.4.6",
+    "nodemailer": "10.6.0",
     "react": "19.3.0",
     "react-dom": "19.3.0",
     "server-only": "0.0.1",
@@ -29,6 +31,7 @@
     "@tailwindcss/turbopack": "4.3.3",
     "eslint": "^9",
     "eslint-config-next": "16.4.6",
+    "playwright": "1.65.1",
     "prettier": "3.10.1",
     "tailwindcss": "4.3.3"
   }

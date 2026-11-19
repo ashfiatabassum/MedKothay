@@ -22,10 +22,7 @@ function Saved({ text }) {
   return (
     <FocusMessage className="flex items-center gap-1 text-sm text-in-stock-foreground">
       <CircleCheck className="size-4" aria-hidden="true" />
-      {text}{" "}
-      <span className="text-xs text-muted-foreground">
-        (demo: saving starts in step W1, so the list still shows the old values)
-      </span>
+      {text}
     </FocusMessage>
   );
 }

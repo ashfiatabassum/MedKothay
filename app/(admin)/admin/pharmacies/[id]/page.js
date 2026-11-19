@@ -119,16 +119,20 @@ export default async function ReviewPharmacyPage({ params }) {
               </span>
             </Row>
           </dl>
-          <div className="flex min-h-40 flex-col items-center justify-center gap-2 rounded-lg border border-dashed bg-muted p-4 text-center text-sm text-muted-foreground">
-            <ImageOff className="size-8" aria-hidden="true" />
-            <p>
-              The licence photo appears here from step W1, when uploads are
-              stored privately.
-            </p>
-            <p className="text-xs">
-              Check that the number and expiry on the photo match the details
-              above.
-            </p>
+          <div className="rounded-lg border bg-muted p-3">
+            {p.licencePhotoUrl ? (
+              // Signed for this admin review only; the bucket itself is private.
+              // eslint-disable-next-line @next/next/no-img-element
+              <img
+                src={p.licencePhotoUrl}
+                alt={`Licence submitted by ${p.name}`}
+                className="max-h-[32rem] w-full object-contain"
+              />
+            ) : (
+              <p className="text-sm">
+                The licence photo is unavailable. Refresh and try again.
+              </p>
+            )}
           </div>
         </section>
 

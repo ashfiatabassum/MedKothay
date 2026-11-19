@@ -3,6 +3,8 @@
 // Pharmacy server actions. The shop is ALWAYS the signed-in pharmacist's own
 // (from the session), never an id sent by the browser. All input is checked here.
 import { getCurrentUser } from "@/lib/data/session";
+import { revalidatePath } from "next/cache";
+import { redirect } from "next/navigation";
 import {
   addStock,
   checkLicencePhoto,
@@ -135,11 +137,13 @@ export async function registerPharmacyAction(_prev, fd) {
     ...v,
     lat,
     lng,
-    phone: phone.value,
+    phone: phone.value.slice(3),
   });
   if (!result.ok)
     return { status: "error", formError: result.error, values: v };
-  return { status: "submitted", shopName: v.name };
+  revalidatePath("/pharmacy");
+  revalidatePath("/admin");
+  redirect("/pharmacy");
 }
 
 // ---------- Inventory ----------

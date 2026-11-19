@@ -26,7 +26,7 @@ const CHECKLIST = [
 ];
 
 const EMAIL_NOTE =
-  "We'll try to email the owner; their dashboard always shows the result. Demo: nothing is saved and no email is sent until step W1.";
+  "We'll try to email the owner; their dashboard always shows the result.";
 
 function Done({ ok, children }) {
   return (
