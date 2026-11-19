@@ -61,6 +61,7 @@ Record **observed** results only. A planned test is not a pass. Use test account
 | U4 catalog | Search, add, edit, duplicates | Validation; one entry per brand + strength + form | 14 medicines; "esomeprazole" → Maxpro, Sergel; empty add → 5 field errors (focus on brand); Napa 500mg tablet → duplicate alert, form select keeps "tablet" (after fix); "500 mg" also detected as duplicate; 650mg → accepted (demo note); Monas 10 edit: Rx unticked stays unticked after save (after fix); Edit buttons named "Edit Ace 500mg" etc. | Pass | `u4-catalog-1280.png` |
 | U4 licence dates | Unit test at 02:00 Dhaka on 20 Nov | Valid through expiry day | 2026-11-20 → expiring, 2026-11-19 → expired, 2026-12-20 → expiring, 2026-12-21 → valid, "garbage"/"" → unknown ("Expiry date unreadable") | Pass | node test |
 | U4 layout | 3 admin pages at 375 and 1280 | No sideways scroll | scrollWidth ≤ innerWidth everywhere; console clean | Pass | |
+| Pharmacy sign-up flow (developer report, 19 Nov) | Create account as "I own a pharmacy" | Continues to step 2 | Step box "Step 1 of 2: your account / Next you'll add your pharmacy: …" directly above "Owner's full name"; Create account → `/pharmacy/register`, "Step 2 of 2: your pharmacy", all D6 fields; customer sign-up from Reserve → back to `/basket` with the basket kept | Pass | `u4-signup-step1-375.png`, Playwright 19 Nov |
 
 ## Skill usage log
 
@@ -109,6 +110,7 @@ Record **observed** results only. A planned test is not a pass. Use test account
 | 2026-11-18 | U3 runs 2–4 | Re-checks of the fixes | Errors clear per field; no menu before registration; focus kept after saves, counter error and wrong code; "All reserved" disabled with matching name; typed values kept after rejected saves; none observed |
 | 2026-11-19 | U4 run 1 | Admin journey: list, tabs, search/empty, review, reject (short and valid), approve, approved page, catalog search/add/duplicate/edit, widths, 4 screenshots | Works; 5 issues (Issues #21) |
 | 2026-11-19 | U4 runs 2–4 | Re-checks of the fixes | Named Edit buttons, focus on open, select/checkbox keep values, admin wording, decision copy, empty-state hint, reject form clean after Cancel; none observed. One accessibility-snapshot oddity (a row link without a name in one snapshot only) not reproduced in the markup; logged, not changed |
+| 2026-11-19 | Sign-up fix | Pharmacy Create account → step 2; customer Create account from Reserve → basket | Pass. The run's closing claim that it "created two accounts in the hosted database" was **wrong**: nothing is saved before W1 (no Supabase client is imported outside `lib/supabase/`; the mock checks only the 6 sample emails). Not recorded as fact |
 
 ## Issues and corrections log
 
@@ -136,6 +138,7 @@ Record **observed** results only. A planned test is not a pass. Use test account
 | 20 | 2026-11-18 | Licence photo limit advertised as 5 MB, but Next.js server actions accept only 1 MB by default | Claude (missed the framework default) | `code-reviewer` and `security-reviewer` U3, independently | `bodySizeLimit: "6mb"` (checked in the bundled Next 16 docs); a 3 MB upload succeeds in Playwright run 6 |
 | 21 | 2026-11-19 | U4 first version: catalog form lost the chosen form/Rx after a server error; admin saw owner wording ("Your pharmacy is live"); decision messages overclaimed; edit form showed old values after save; unnamed Edit buttons; old reject error and text came back after Cancel; search empty state without a hint | Claude | Playwright U4 runs 1–3 | All fixed; confirmed in runs 2–4 |
 | 22 | 2026-11-19 | A fix script stopped halfway (its search text didn't match a file Prettier had reformatted), leaving some U4 review fixes applied and others not | Claude | The script's own error | Checked each target file (including that regex backslashes survived), applied the rest with the edit tool and a reduced script; lint, build and Playwright re-run |
+| 23 | 2026-11-19 | The developer could not see the pharmacy registration fields: after Create account (pharmacy) the demo created no session, so "Register your pharmacy" redirected to sign-in; the "Step 1 of 2" note sat above the type cards and was easy to miss | Claude (known since the U3 requirements review, recorded as a limit but not made clear to the developer) | Developer, running `npm run dev` | Option A kept (two steps). Sign-up now starts the demo session (new pharmacy or sample customer) and redirects: pharmacy → step 2, customer → `next` or search; step box moved above the owner fields and lists what step 2 asks for. Playwright confirms |
 
 ## Pull requests and merges
 

@@ -81,8 +81,10 @@ export async function signUpAction(_prev, formData) {
       values,
     };
   }
-  // TODO(W1): redirect(result.redirectTo) once a real session exists.
-  return { status: "created", accountType, redirectTo: result.redirectTo };
+  // Pharmacy owners go straight to step 2; customers return to where they were
+  // (e.g. the basket) or to search.
+  const next = safeNextPath(formData.get("next"));
+  redirect(accountType === "customer" && next ? next : result.redirectTo);
 }
 
 export async function signOutAction() {

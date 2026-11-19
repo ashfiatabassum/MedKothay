@@ -69,7 +69,7 @@ Fields and status decided 18 Nov (D6). A second demo pharmacy account without a 
 - [x] Counter sale: search by brand or generic, add items, complete; "N units are reserved" block message
 - [x] Incoming reservations: items, countdown, enter pickup code, mark collected
 
-**Done when:** each screen works on mock data, including the blocked-by-holds message and the wrong-pickup-code error. **Met 18 Nov** (Playwright U3 runs 1–6). Not saved until W1–W3: registration, stock edits, sales, collection; a newly created pharmacy account must sign in as a sample account to reach step 2.
+**Done when:** each screen works on mock data, including the blocked-by-holds message and the wrong-pickup-code error. **Met 18 Nov** (Playwright U3 runs 1–6). Not saved until W1–W3: registration, stock edits, sales, collection; since 19 Nov, Create account continues straight to step 2 (demo session until W1).
 
 ## U4: Admin screens
 
