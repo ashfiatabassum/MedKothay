@@ -1,7 +1,7 @@
 # Project status and next handoff
 
 **Updated:** 19 November 2026
-**Phase:** M0 and the original UI phase are complete and live. **R1 is complete on sample data. B1 is implemented and integration-tested** on `feature/b1-schema`: schema, RLS, transactional functions, private licence storage and realistic seed are applied to Supabase; 18 live role/workflow/concurrency groups, advisors, lint and build pass. PR #8 remains a draft until the required code, security and requirements subagent reviews can run. The UI still uses sample data until W1–W3.
+**Phase:** M0 and the original UI phase are complete and live. **R1 is complete on sample data. B1 is implemented and integration-tested** on `feature/b1-schema`: schema, RLS, transactional functions, private licence storage and realistic seed are applied to Supabase; 18 live role/workflow/concurrency groups, advisors, lint and build pass. The developer explicitly waived the unavailable three-subagent review gate on 19 November to keep the deadline moving. The UI still uses sample data until W1–W3.
 
 - Live: https://med-kothay.vercel.app (auto-deploys from `main`)
 - Repo: https://github.com/ashfiatabassum/MedKothay (public)
@@ -38,7 +38,7 @@
 | U3 pharmacy screens                      |   Yes   |     Yes     |   Yes    | Merged PR #4 (`460454e`); Playwright 6 runs; review-react-ui, vercel-react-best-practices; code, security and requirements reviewers. Registration, stock edits, sales and collection are **not saved** until W1–W3                                                                               |
 | U4 admin screens                         |   Yes   |     Yes     |   Yes    | Merged PR #5 (`05a1b67`); Playwright 4 runs; review-react-ui, vercel-react-best-practices; code, security and requirements reviewers. Decisions and catalog changes are **not saved** until W1                                                                                                    |
 | R1 workflow review changes               |   Yes   |     Yes     |   Yes    | Code, requirements and security reviews completed; 13 contract groups and 48 direct Playwright/Chrome journey groups at 375/1280 passed, plus lint/build. Final screenshots and results in `docs/verification.md`. Merged PR #7 (`2c87183`); production smoke checks passed. Sample-only behavior |
-| B1 schema, RLS, functions, seed          |   Yes   |     Yes     | Partial  | Nine migrations, private Storage and seed applied; 18 live integration groups, advisors, lint and build pass. Required three-agent review/merge gate is pending because the account usage limit prevented the reviewers from starting                                                             |
+| B1 schema, RLS, functions, seed          |   Yes   |     Yes     |   Yes    | Nine migrations, private Storage and seed applied; 18 live integration groups, advisors, lint and build pass. The developer explicitly waived the unavailable three-agent review gate on 19 November to meet the deadline                                                                         |
 | W1 wire auth, registration, admin        |   Yes   |     No      |    No    |                                                                                                                                                                                                                                                                                                   |
 | W2 wire inventory, counter sale          |   Yes   |     No      |    No    |                                                                                                                                                                                                                                                                                                   |
 | W3 wire search, reservations, collection |   Yes   |     No      |    No    |                                                                                                                                                                                                                                                                                                   |
@@ -46,7 +46,7 @@
 
 ## Next task
 
-Finish the **B1 review gate** on `feature/b1-schema`: run the required code, security and requirements subagents when the account limit resets, fix any findings, rerun relevant checks, mark PR #8 ready and merge it. Then start W1 (real Auth, registration and admin wiring). R1 is merged and live; the current production UI still intentionally uses sample data.
+Start **W1** after B1 merges: wire real Supabase Auth, pharmacy registration, admin approval/rejection and catalog data. R1 is merged and live; the current production UI still intentionally uses sample data.
 
 `npm run verify:r1` stubs only Next session/redirect plumbing and React request caching, loads the real data/action modules and uses isolated sample fixtures with a fixed Dhaka date. It does not verify browser behavior, real transactions, database idempotency or RLS. Database persistence remains intentionally deferred.
 

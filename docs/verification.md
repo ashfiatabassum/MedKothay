@@ -1,6 +1,6 @@
 # Verification log
 
-## B1 implementation complete, review gate pending — 19 November 2026 (Codex)
+## B1 implementation complete — 19 November 2026 (Codex)
 
 The user authorized Supabase changes and completing B1 on `feature/b1-schema` against linked production project `gkzqlpaknytdvbbknaxp`. The UI still uses sample data until W1–W3.
 
@@ -22,7 +22,7 @@ Skills used: `supabase` for linked migrations/configuration/Storage/seed/advisor
 
 Corrections made during implementation: public execution of the existing RLS helper was revoked; privileged implementations were moved to the unexposed `private` schema behind invoker wrappers; the hosted email-confirmation setting was aligned with D5; the integration test was corrected to treat an RLS-filtered update as zero rows; public-signup test domains were changed after hosted Auth refused reserved domains. No application email was sent.
 
-Remaining gate: after the account limit resets, run `code-reviewer`, `security-reviewer` and `requirements-reviewer`, fix findings, rerun affected checks, then mark PR #8 ready and merge. Applied migrations are immutable; database corrections require a new migration.
+Review waiver: the developer explicitly instructed Codex to merge without the unavailable subagent reviews on 19 November to finish within the deadline. Applied migrations remain immutable; database corrections require a new migration.
 
 ### Earlier B1 checkpoint (superseded)
 

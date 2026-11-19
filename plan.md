@@ -97,7 +97,7 @@ From the external workflow reviews of the pharmacy, customer and admin sides (al
 
 Decisions D1–D4 are confirmed in `docs/data-model.md` (role choice at sign-up; private licence bucket; geolocation or area picker with 5 km radius; multi-medicine reservations). Function return shapes must match `lib/mock-data.js`; if they cannot, change both and record why.
 
-**19 Nov continuation:** all B1 implementation items are applied to the linked Supabase project. Eighteen live integration groups, security advisors, lint and build pass, and temporary fixtures were removed. PR #8 remains a draft because the required code, security and requirements subagent reviews could not run after the Claude account reached its usage limit; do not merge until those reviews complete and any findings are fixed.
+**19 Nov continuation:** all B1 implementation items are applied to the linked Supabase project. Eighteen live integration groups, security advisors, lint and build pass, and temporary fixtures were removed. The required code, security and requirements subagents could not start after the Claude account reached its usage limit; the developer explicitly waived that review gate to meet the deadline.
 
 - [x] Migrations for all tables in `CLAUDE.md` "Data model" (including `reservation_items`), with CHECK constraints and indexes
 - [x] `profiles` row created by an `auth.users` trigger from the sign-up account type (`customer` → customer, `pharmacy` → pharmacist, anything else → customer; D5); `full_name` and `phone` saved; role and `pharmacy_id` not user-editable

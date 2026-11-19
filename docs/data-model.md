@@ -1,6 +1,6 @@
 # Data model
 
-**Status: B1 implemented and integration-tested (19 Nov 2026); required reviewer gate pending.** The intended model is in `CLAUDE.md` ("Data model", "Business rules", "Roles and access"). This file records the decisions behind it and the model **as built** in `supabase/migrations/`: tables, constraints, indexes, RLS policies, functions and grants. Update it in the same change as any migration.
+**Status: B1 implemented and integration-tested (19 Nov 2026); the developer waived the unavailable reviewer gate to meet the deadline.** The intended model is in `CLAUDE.md` ("Data model", "Business rules", "Roles and access"). This file records the decisions behind it and the model **as built** in `supabase/migrations/`: tables, constraints, indexes, RLS policies, functions and grants. Update it in the same change as any migration.
 
 ## Decisions (confirmed by the developer, 18 Nov 2026)
 
@@ -74,4 +74,4 @@ The seed contains 100 medicine rows derived from the pinned MIT-licensed MedEx d
 
 `scripts/verify-b1.mjs` passed 18 live integration groups covering signup metadata forgery, role and RLS boundaries, concurrent registration and reservation, private Storage, all admin decisions, price snapshots and idempotency, whole-basket pickup, last-unit and opposite-lock-order races, lazy expiry, suspension, stock/licence expiry, active-reservation limits and pharmacist refusal. Security advisors, lint and build are clean.
 
-W1–W3 have not wired the app to these tables; the live UI remains on sample data. The branch remains unmerged until the required code, security and requirements subagent reviews can run.
+W1–W3 have not wired the app to these tables; the live UI remains on sample data. The required subagent review gate was explicitly waived by the developer after the agents could not start because of the account usage limit.
