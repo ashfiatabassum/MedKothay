@@ -58,7 +58,7 @@ Agreed in chat instead of a `grill-me` session (no time that day). Claude propos
 
 ## As built (B1)
 
-Migrations 1–12 are applied to the linked Supabase project; 13 (W3) is written but **not yet applied**:
+All 13 migrations are applied to the linked Supabase project (13 on 19 Nov via `db push --remote`; advisors: only "leaked password protection disabled"):
 
 1. `restrict_rls_auto_enable_execute` keeps the existing RLS event trigger active while revoking its helper from public callers.
 2. `core_schema` creates the eight intended tables (`profiles`, `pharmacies`, `medicines`, `pharmacy_stock`, `reservations`, `reservation_items`, `sales`, `sale_items`) with UUID keys, foreign keys, checks, lookup indexes, unique stock/medicine identities and RLS. The Auth trigger accepts only the whitelisted account type, name and phone and ignores forged role/shop metadata.
