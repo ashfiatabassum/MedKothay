@@ -4,12 +4,17 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { cn } from "@/lib/utils";
 
-/** A header link that marks itself as the current page. */
-export function NavLink({ href, exact = false, children }) {
+/**
+ * A header link that marks itself as the current page. `also` is an extra path
+ * prefix that counts as this link (e.g. /admin/pharmacies/* for "Pharmacies").
+ */
+export function NavLink({ href, exact = false, also, children }) {
   const pathname = usePathname();
-  const active = exact
-    ? pathname === href
-    : pathname === href || pathname.startsWith(`${href}/`);
+  const active =
+    (exact
+      ? pathname === href
+      : pathname === href || pathname.startsWith(`${href}/`)) ||
+    (also ? pathname === also || pathname.startsWith(`${also}/`) : false);
 
   return (
     <Link
