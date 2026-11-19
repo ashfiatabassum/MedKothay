@@ -1,7 +1,7 @@
 # Project status and next handoff
 
 **Updated:** 18 November 2026
-**Phase:** M0, U1, U1b complete and live. **U2 (customer screens) built and verified on `feature/u2-customer`; pull request open.** Next: U3 (pharmacy screens).
+**Phase:** M0, U1, U1b, U2 complete and live. **U3 (pharmacy screens) built and verified on `feature/u3-pharmacy`; pull request open.** Next: U4 (admin screens).
 
 - Live: https://med-kothay.vercel.app (auto-deploys from `main`)
 - Repo: https://github.com/ashfiatabassum/MedKothay (public)
@@ -15,7 +15,9 @@
 - Env var names follow the current Supabase dashboard: `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY` (the anon/publishable key) and `SUPABASE_SECRET_KEY` (server only).
 - Build order (18 Nov): **UI first on sample data (U1–U4), then backend (B1), then wiring (W1–W3)**, at the developer's request. Accepted cost: about half a day of wiring work, and the stock logic is built later. Mitigation: `lib/data/` functions return data in the same shape the Postgres functions will.
 - Accounts (18 Nov, D5): email + password; one email = one account = one type (customer or pharmacy); pharmacy accounts cannot reserve; neutral auth messages; email confirmation off; no password reset for now. Header shows only logo + Sign in when signed out.
-- Demo session (U2, until W1): signing in with a sample account sets an httpOnly cookie holding only the role (`customer`/`pharmacist`/`admin`) of a fixed sample profile, so sign-in/out, Reserve and the role gates can be tried. It grants access to sample data only and is removed in W1.
+- Demo session (U2/U3, until W1): signing in with a sample account sets an httpOnly cookie holding only that account's **key** (customer, pharmacist, pharmacist_new, pharmacist_pending, pharmacist_rejected, admin), never an id or role from the browser. Sample data only; removed in W1.
+- Demo accounts (password `demo-password`, all `@medkothay.test`): `customer`, `pharmacy` (approved Lazz Pharma), `newpharmacy` (no shop yet: step 2), `pending` (Green Life, pending), `rejected` (MediCare Point, rejected with a reason), `admin`.
+- Pharmacy registration (D6, 18 Nov): shop name, address, area, map location, shop phone, DGDA licence number, licence photo (≤ 5 MB, checked by content; server action body limit 6 MB), licence expiry; status banner on the dashboard; two emails from W1 (developer will set up a Gmail app password).
 - Theme (18 Nov): white and deep blue `#0B5CAD`, blue-white background, amber accent for pickup code and countdown (`CLAUDE.md` "Theme").
 - Data model decisions D1–D4 (18 Nov): sign-up offers customer or pharmacy owner, but the role is written by the database; licence photos in a private bucket; location from the browser or an area picker, 5 km radius; **one reservation = one shop, many medicines, one pickup code** (new `reservation_items` table). Details in `docs/data-model.md`.
 - Agentic tooling: Prettier PostToolUse hook; skills `grill-me`/`grilling`, `supabase` + `supabase-postgres-best-practices` + project `review-supabase-model`, `vercel-react-best-practices` + project `review-react-ui`; subagents `code-reviewer`, `security-reviewer`, `requirements-reviewer`; Playwright MCP.
@@ -27,8 +29,8 @@
 | M0 setup | Yes | Yes | Yes | Build/lint pass; health ok locally and on Vercel; hook fired in a real edit; Playwright MCP opened the live site |
 | U1 UI foundation | Yes | Yes | Yes | Merged PR #1 (`c6ab437`); Playwright 3 runs, 2 skills, code-reviewer |
 | U1b header and accounts UI | Yes | Yes | Yes | Merged PR #2 (`34d1f42`); Playwright 2 runs, review-react-ui, code-reviewer, security-reviewer |
-| U2 customer screens | Yes | Yes | Yes | PR open; Playwright 2 runs; review-react-ui, vercel-react-best-practices; code, security and requirements reviewers. Sample data: new reservations and cancels are **not saved** until W3 |
-| U3 pharmacy screens | Yes | No | No | |
+| U2 customer screens | Yes | Yes | Yes | Merged PR #3 (`26be1b4`); Playwright 2 runs; review-react-ui, vercel-react-best-practices; code, security and requirements reviewers. Sample data: new reservations and cancels are **not saved** until W3 |
+| U3 pharmacy screens | Yes | Yes | Yes | PR open; Playwright 6 runs; review-react-ui, vercel-react-best-practices; code, security and requirements reviewers. Registration, stock edits, sales and collection are **not saved** until W1–W3 |
 | U4 admin screens | Yes | No | No | |
 | B1 schema, RLS, functions, seed | Yes | No | No | |
 | W1 wire auth, registration, admin | Yes | No | No | |
@@ -38,6 +40,6 @@
 
 ## Next task
 
-Start **U3 (pharmacy screens)** on `feature/u3-pharmacy` from an up-to-date `main`, after the U2 PR is merged. Decide the pharmacy registration fields with the developer first (deferred in D5). Sign in as `pharmacy@medkothay.test` / `demo-password` to reach `/pharmacy` (the layout now redirects other roles). Add `lib/data/pharmacy.js` (pharmacist sees exact quantities for their own shop only).
+Start **U4 (admin screens)** on `feature/u4-admin` after the U3 PR is merged: pending pharmacies list, licence review (details, photo placeholder until Storage in W1), approve / reject with a reason, minimal medicine catalog. Sign in as `admin@medkothay.test`. Add `lib/data/admin.js`.
 
 Order: U1 → U2 → U3 → U4 → B1 (backend) → W1–W3 (wire up) → F. Data-model decisions D1–D4 are already confirmed (`docs/data-model.md`).

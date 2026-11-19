@@ -60,13 +60,16 @@ Each milestone after M0 is one branch (`feature/<id>-<name>`, for example `featu
 
 ## U3: Pharmacy screens
 
-- [ ] Registration form: shop details, area, location, phone, licence number, photo, expiry; field errors; "pending approval" state
-- [ ] Dashboard: today's sales, low stock count, active reservations
-- [ ] Inventory: list, add from catalog (quantity, price, expiry), edit and adjust
-- [ ] Counter sale: search by brand or generic, add items, complete; "N units are reserved" block message
-- [ ] Incoming reservations: items, countdown, enter pickup code, mark collected
+Fields and status decided 18 Nov (D6). A second demo pharmacy account without a shop (`newpharmacy@medkothay.test`) shows the registration flow.
 
-**Done when:** each screen works on mock data, including the blocked-by-holds message and the wrong-pickup-code error.
+- [x] Registration form (step 2 of 2): shop name, address, area, map location, shop phone, DGDA licence number, licence photo, licence expiry; field errors; "received, under review, we will email you" confirmation
+- [x] Dashboard status banner: pending / rejected with reason / approved (D6)
+- [x] Dashboard: today's sales, low stock count, active reservations
+- [x] Inventory: list, add from catalog (quantity, price, expiry), edit and adjust
+- [x] Counter sale: search by brand or generic, add items, complete; "N units are reserved" block message
+- [x] Incoming reservations: items, countdown, enter pickup code, mark collected
+
+**Done when:** each screen works on mock data, including the blocked-by-holds message and the wrong-pickup-code error. **Met 18 Nov** (Playwright U3 runs 1–6). Not saved until W1–W3: registration, stock edits, sales, collection; a newly created pharmacy account must sign in as a sample account to reach step 2.
 
 ## U4: Admin screens
 
@@ -100,6 +103,7 @@ Decisions D1–D4 are confirmed in `docs/data-model.md` (role choice at sign-up;
 - [ ] Auth hardening (security review, U1b): map every Supabase sign-in/sign-up error to the neutral messages (never show raw Supabase text); confirm Supabase Auth rate limits; any `?next=` return path must be a same-origin path (starts with `/`, not `//`, no ``, no scheme); every protected page and action checks `getClaims`/role on the server, not only in `proxy.js`; remove `mockAccounts` and the mock auth path
 - [ ] Registration form saves through `register_pharmacy` and uploads the licence photo
 - [ ] Admin pending list, licence photo, approve and reject on real data; catalog on real data
+- [ ] Emails (D6): "registration received" and the approve/reject result via Gmail app password (developer sets `GMAIL_USER`/`GMAIL_APP_PASSWORD` in `.env.local` and Vercel as Secret); best effort
 
 **Done when:** demo loop steps 1–2 pass on the live site (register → pending → admin approves).
 
@@ -116,6 +120,7 @@ Decisions D1–D4 are confirmed in `docs/data-model.md` (role choice at sign-up;
 - [ ] Search through `search_medicine` with real distances
 - [ ] Reserve, cancel and my reservations through the real functions
 - [ ] Pharmacy incoming reservations and collect with the pickup code
+- [ ] Pickup code (security review U3): generated in the database with pgcrypto `gen_random_bytes`; checked inside `collect_reservation`; lock the reservation (or require a new code) after ~5 wrong attempts; same generic error for wrong code and wrong reservation
 
 **Done when:** demo loop steps 4–7 pass on the live site, as a customer, a pharmacist of the shop, and a pharmacist of another shop (who sees nothing).
 
