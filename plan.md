@@ -83,6 +83,8 @@ Fields and status decided 18 Nov (D6). A second demo pharmacy account without a 
 
 From the external workflow reviews of the pharmacy, customer and admin sides (all accepted 19 Nov; decisions D7–D21).
 
+**19 Nov continuation:** all items below are represented in the local code and sample scenarios. The boxes remain unticked because the required browser verification at 375/1280 is pending (browser access host unavailable). `npm run verify:r1` covers 13 deterministic data/action checks; see `docs/verification.md` for reviews, fixes and verification limits. Do not merge or start B1 as if R1 browser QA had passed.
+
 - [ ] "Expired" badge in owner inventory; expired rows shown as unavailable (D9)
 - [ ] Unit wording everywhere: "per tablet / capsule / bottle / vial" (D11)
 - [ ] Resubmit flow wording for rejected and expired-licence shops (D7, D12)

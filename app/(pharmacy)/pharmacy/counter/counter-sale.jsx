@@ -10,7 +10,16 @@ import { FocusMessage, SuccessHeading } from "@/components/form-field";
 import { EmptyState } from "@/components/states";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { MAX_SALE_LINES, formatTaka } from "@/lib/constants";
+import { MAX_SALE_LINES, formatTaka, perUnit } from "@/lib/constants";
+
+/** Text of the Add button for one search result. */
+function addLabel(s, inSale) {
+  if (inSale) return "Added";
+  if (s.expired) return "Expired";
+  if (s.available <= 0)
+    return s.heldQuantity > 0 ? "All reserved" : "None left";
+  return "Add";
+}
 import { completeSaleAction } from "../actions";
 
 export function CounterSale({ stock }) {
@@ -166,10 +175,13 @@ export function CounterSale({ stock }) {
                     {s.prescriptionOnly && <RxBadge />}
                   </p>
                   <p className="text-muted-foreground tabular-nums">
-                    Can sell {s.available}
-                    {s.heldQuantity > 0 &&
-                      ` · ${s.heldQuantity} reserved`} ·{" "}
-                    {formatTaka(s.sellingPrice)}
+                    {s.expired
+                      ? `Expired ${s.expiryDate}`
+                      : `Can sell ${s.available}`}
+                    {!s.expired &&
+                      s.heldQuantity > 0 &&
+                      ` · ${s.heldQuantity} reserved`}{" "}
+                    · {perUnit(s.sellingPrice, s.form)}
                   </p>
                 </div>
                 <Button
@@ -180,15 +192,9 @@ export function CounterSale({ stock }) {
                   disabled={
                     inSale || s.available <= 0 || pending || (full && !inSale)
                   }
-                  aria-label={`${inSale ? "Added" : s.available <= 0 ? (s.heldQuantity > 0 ? "All reserved" : "None left") : "Add"}: ${s.brandName} ${s.strength}`}
+                  aria-label={`${addLabel(s, inSale)}: ${s.brandName} ${s.strength}`}
                 >
-                  {inSale
-                    ? "Added"
-                    : s.available <= 0
-                      ? s.heldQuantity > 0
-                        ? "All reserved"
-                        : "None left"
-                      : "Add"}
+                  {addLabel(s, inSale)}
                 </Button>
               </li>
             );
@@ -229,7 +235,7 @@ export function CounterSale({ stock }) {
                       <div className="flex items-center gap-2 text-sm text-muted-foreground">
                         <StockBadge band={s.band} />
                         <span className="tabular-nums">
-                          {formatTaka(s.sellingPrice)} each
+                          {perUnit(s.sellingPrice, s.form)}
                         </span>
                       </div>
                     </div>
@@ -293,6 +299,12 @@ export function CounterSale({ stock }) {
               <span>Total</span>
               <span className="tabular-nums">{formatTaka(total)}</span>
             </div>
+            {lines.some((l) => byId.get(l.medicineId)?.prescriptionOnly) && (
+              <p className="rounded-lg bg-rx px-3 py-2 text-sm text-rx-foreground">
+                Check the customer&apos;s prescription before handing over the
+                Rx medicines.
+              </p>
+            )}
             {result?.status === "error" && (
               <FocusMessage
                 key={result.message}

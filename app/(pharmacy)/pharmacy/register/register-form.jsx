@@ -31,7 +31,15 @@ export function RegisterForm({ resubmit, initial = {}, rejectionReason }) {
 
   const v = state.values ?? initial;
   const [areaId, setAreaId] = useState(v.area ?? "");
-  const [coords, setCoords] = useState(null); // { lat, lng, source }
+  const [coords, setCoords] = useState(() =>
+    Number.isFinite(initial.lat) && Number.isFinite(initial.lng)
+      ? {
+          lat: initial.lat,
+          lng: initial.lng,
+          source: initial.locationSource === "device" ? "device" : "area",
+        }
+      : null,
+  );
   const [locating, setLocating] = useState(false);
   const [geoError, setGeoError] = useState(null);
   // Tied to the server state they were set under: after a submit React clears
@@ -54,9 +62,9 @@ export function RegisterForm({ resubmit, initial = {}, rejectionReason }) {
           We received the registration for{" "}
           <span className="font-medium text-foreground">{state.shopName}</span>.
           An admin will check your DGDA licence, usually within 1 to 2 days.
-          We&apos;ll email you the result, and you&apos;ll also see it on your
-          dashboard. Until then your shop is hidden from customers, but you can
-          already add your stock.
+          We&apos;ll try to email you the result, and you&apos;ll also see it on
+          your dashboard. Until then your shop is hidden from customers, but you
+          can already add your stock.
         </p>
         <p className="rounded-md bg-muted px-3 py-2 text-xs text-muted-foreground">
           Demo: registrations are saved and emails sent from step W1. Nothing
@@ -92,7 +100,7 @@ export function RegisterForm({ resubmit, initial = {}, rejectionReason }) {
     setGeoError(null);
     if (!("geolocation" in navigator)) {
       setGeoError(
-        "This browser can't share its location. The area centre is used.",
+        "This browser can't share its location. Your shop location has not changed.",
       );
       return;
     }
@@ -102,13 +110,15 @@ export function RegisterForm({ resubmit, initial = {}, rejectionReason }) {
         setCoords({
           lat: Number(p.coords.latitude.toFixed(5)),
           lng: Number(p.coords.longitude.toFixed(5)),
-          source: "gps",
+          source: "device",
         });
         setLocating(false);
       },
       () => {
         setLocating(false);
-        setGeoError("We couldn't get your location. The area centre is used.");
+        setGeoError(
+          "We couldn't get your current location. Your shop location has not changed.",
+        );
       },
       { enableHighAccuracy: true, timeout: 15_000 },
     );
@@ -192,11 +202,7 @@ export function RegisterForm({ resubmit, initial = {}, rejectionReason }) {
               id="reg-area"
               name="area"
               required
-              // A mounted <select> keeps its first default, so after a failed
-              // submit (React resets the form) it is remounted with the area
-              // just submitted, staying in step with the hidden coordinates.
-              key={`area-${state.values?.area ?? "init"}`}
-              defaultValue={areaId}
+              value={areaId}
               onChange={(e) => {
                 setAreaId(e.target.value);
                 setCoords(null);
@@ -217,9 +223,15 @@ export function RegisterForm({ resubmit, initial = {}, rejectionReason }) {
 
         <div className="space-y-2">
           <p id="reg-location-label" className="text-sm font-medium">
-            Location on the map
+            Shop location
           </p>
           <input type="hidden" name="lat" value={location?.lat ?? ""} />
+          {/* D21: the admin sees whether the pin is the area centre or the phone. */}
+          <input
+            type="hidden"
+            name="locationSource"
+            value={location?.source === "device" ? "device" : "area"}
+          />
           <input type="hidden" name="lng" value={location?.lng ?? ""} />
           <p
             className="flex items-start gap-1 text-sm text-muted-foreground"
@@ -228,8 +240,8 @@ export function RegisterForm({ resubmit, initial = {}, rejectionReason }) {
           >
             <MapPin className="mt-0.5 size-4 shrink-0" aria-hidden="true" />
             {location
-              ? location.source === "gps"
-                ? `Your current location (${location.lat}, ${location.lng}). Customers' distances are measured from here.`
+              ? location.source === "device"
+                ? `Device location (${location.lat}, ${location.lng}). Customers' distances are measured from here. Use your current location to update it.`
                 : `Centre of ${area.name}. For accurate distances, use your location while you are in the shop.`
               : "Choose the area first."}
           </p>
@@ -312,7 +324,7 @@ export function RegisterForm({ resubmit, initial = {}, rejectionReason }) {
           hint={
             state.status === "error"
               ? "Choose the photo again: for safety, browsers clear it after each try."
-              : "A clear photo of the licence. JPG, PNG or WebP, up to 5 MB. Only admins see it."
+              : "A clear photo of the licence. JPG, PNG or WebP, up to 5 MB. Only you and MedKothay admins can see it."
           }
           error={photoNow.error ?? errors.licencePhoto}
         >

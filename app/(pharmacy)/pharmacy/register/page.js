@@ -3,7 +3,7 @@ import { Store } from "lucide-react";
 import { PageHeading } from "@/components/area-shell";
 import { EmptyState } from "@/components/states";
 import { buttonVariants } from "@/components/ui/button";
-import { getMyPharmacy } from "@/lib/data/pharmacy";
+import { canSubmitRegistration, getMyPharmacy } from "@/lib/data/pharmacy";
 import { requireRole } from "@/lib/data/session";
 import { RegisterForm } from "./register-form";
 
@@ -12,7 +12,8 @@ export const metadata = { title: "Register your pharmacy" };
 export default async function RegisterPage() {
   const user = await requireRole("pharmacist"); // not only the layout
   const pharmacy = await getMyPharmacy(user);
-  const resubmit = pharmacy?.status === "rejected";
+  // Rejected, suspended or licence-expired shops correct and resubmit (D7, D12, D18).
+  const resubmit = Boolean(pharmacy) && canSubmitRegistration(pharmacy);
 
   if (pharmacy && !resubmit) {
     return (
@@ -41,7 +42,7 @@ export default async function RegisterPage() {
         title={
           resubmit ? "Correct your registration" : "Register your pharmacy"
         }
-        description="An admin checks your DGDA licence before customers can see your shop. We'll email you the result."
+        description="An admin checks your DGDA licence before customers can see your shop. We'll try to email you the result; your dashboard always shows it."
       />
       <RegisterForm
         resubmit={resubmit}
@@ -52,6 +53,9 @@ export default async function RegisterPage() {
                 name: pharmacy.name,
                 address: pharmacy.address,
                 area: pharmacy.area,
+                lat: pharmacy.latitude,
+                lng: pharmacy.longitude,
+                locationSource: pharmacy.locationSource,
                 phone: pharmacy.phone,
                 licenceNumber: pharmacy.licenceNumber,
                 licenceExpiry: pharmacy.licenceExpiry,

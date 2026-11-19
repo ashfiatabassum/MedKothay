@@ -180,6 +180,42 @@ function MedicineRow({ m }) {
             d={state.values ?? m}
             autoFocus
           />
+          {m.stockCount > 0 && (
+            // D20: one catalog row is shared by every pharmacy that stocks it.
+            <div className="space-y-1 rounded-lg border border-destructive/30 bg-destructive/5 p-3 text-sm">
+              <p className="font-medium text-destructive">
+                Used by {m.stockCount}{" "}
+                {m.stockCount === 1 ? "pharmacy" : "pharmacies"}: changes apply
+                to all of them.
+              </p>
+              <label className="flex items-start gap-2">
+                <input
+                  type="checkbox"
+                  name="confirmShared"
+                  className="mt-0.5 size-5 accent-primary"
+                  aria-invalid={
+                    state.fieldErrors?.confirmShared ? true : undefined
+                  }
+                  aria-describedby={
+                    state.fieldErrors?.confirmShared
+                      ? `confirm-${m.id}-error`
+                      : undefined
+                  }
+                />
+                I understand this changes the medicine for every pharmacy that
+                stocks it.
+              </label>
+              {state.fieldErrors?.confirmShared && (
+                <p
+                  id={`confirm-${m.id}-error`}
+                  role="alert"
+                  className="text-destructive"
+                >
+                  {state.fieldErrors.confirmShared}
+                </p>
+              )}
+            </div>
+          )}
           <div className="flex gap-2">
             <Button type="submit" disabled={pending}>
               {pending ? "Saving…" : "Save"}

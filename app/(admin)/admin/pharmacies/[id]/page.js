@@ -53,8 +53,42 @@ export default async function ReviewPharmacyPage({ params }) {
           }
         >
           {p.status === "approved"
-            ? "Approved: this pharmacy is visible to customers."
-            : `Rejected. Reason given to the owner: ${p.rejectionReason || "none recorded"}`}
+            ? p.licenceState === "expired"
+              ? `Approved, but the licence expired on ${p.licenceExpiry}: hidden from customers until the owner updates it.`
+              : "Approved: this pharmacy is visible to customers."
+            : `${p.status === "suspended" ? "Suspended" : "Rejected"}. Reason given to the owner: ${p.rejectionReason || "none recorded"}`}
+        </p>
+      )}
+
+      {p.duplicates.length > 0 && (
+        <div
+          role="alert"
+          className="rounded-xl border border-destructive/40 bg-destructive/5 p-4 text-sm text-destructive"
+        >
+          <p className="font-semibold">Same licence number as another shop</p>
+          <ul className="mt-1 list-disc pl-5">
+            {p.duplicates.map((d) => (
+              <li key={d.id}>
+                <Link
+                  href={`/admin/pharmacies/${d.id}`}
+                  className="underline underline-offset-4"
+                >
+                  {d.name}
+                </Link>{" "}
+                ({d.status})
+              </li>
+            ))}
+          </ul>
+          <p className="mt-1">
+            A licence can move to a new owner, but check this before deciding.
+          </p>
+        </div>
+      )}
+
+      {p.status === "pending" && p.previousRejectionReason && (
+        <p className="rounded-xl border bg-muted p-4 text-sm">
+          <span className="font-semibold">Resubmitted.</span> Last time it was
+          not approved because: {p.previousRejectionReason}
         </p>
       )}
 
@@ -68,6 +102,16 @@ export default async function ReviewPharmacyPage({ params }) {
           </h2>
           <dl className="divide-y">
             <Row label="Licence number">{p.licenceNumber}</Row>
+            <Row label="Last reviewed">
+              {p.reviewedAt
+                ? new Date(p.reviewedAt).toLocaleString("en-GB", {
+                    dateStyle: "medium",
+                    timeStyle: "short",
+                    timeZone: "Asia/Dhaka",
+                  })
+                : "Not reviewed yet"}
+            </Row>
+            {p.reviewedBy && <Row label="Reviewed by">{p.reviewedBy}</Row>}
             <Row label="Expiry date">
               <span className="flex flex-wrap items-center gap-2">
                 {p.licenceExpiry}
@@ -117,13 +161,18 @@ export default async function ReviewPharmacyPage({ params }) {
                 <MapPin className="size-3.5" aria-hidden="true" />
                 {p.latitude}, {p.longitude} (open map)
               </a>
+              <span className="block text-xs font-normal text-muted-foreground">
+                {p.locationSource === "device"
+                  ? "Set from the owner's phone location."
+                  : "Area centre only: the exact shop position was not shared."}
+              </span>
             </Row>
           </dl>
         </section>
       </div>
 
-      {p.status === "pending" && (
-        <ReviewActions pharmacyId={p.id} pharmacyName={p.name} />
+      {(p.status === "pending" || p.status === "approved") && (
+        <ReviewActions pharmacy={p} />
       )}
     </div>
   );

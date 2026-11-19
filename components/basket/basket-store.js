@@ -3,10 +3,63 @@
 // the basket changes (a requirement of useSyncExternalStore). Also follows
 // changes made in other tabs via the "storage" event.
 import { MAX_BASKET_ITEMS } from "@/lib/constants";
+import { isUuid } from "@/lib/validation";
 
 const KEY = "mk-basket-v1";
+const REQUEST_KEY = "mk-reservation-request-v1";
 const listeners = new Set();
 let cache; // undefined = not read yet; null = empty basket
+let pendingRequest = null; // fallback when browser storage is blocked
+let requestStored = true;
+
+/** Identity of the exact pharmacy, quantities and prices submitted. */
+export function basketFingerprint(basket) {
+  if (!basket) return null;
+  const items = basket.items.map((i) => [
+    i.medicineId,
+    i.quantity,
+    i.unitPrice,
+  ]);
+  items.sort((a, b) => a[0].localeCompare(b[0]));
+  return JSON.stringify([basket.pharmacyId, items]);
+}
+
+function readRequest() {
+  if (!requestStored) return pendingRequest;
+  try {
+    const raw = localStorage.getItem(REQUEST_KEY);
+    pendingRequest = raw ? JSON.parse(raw) : null;
+  } catch {}
+  return pendingRequest;
+}
+
+/** Reuse an unresolved attempt even after a reload or navigation (D14). */
+export function reservationRequestId(basket) {
+  const key = basketFingerprint(basket);
+  const saved = readRequest();
+  if (saved?.key === key && isUuid(saved.id)) return saved.id;
+  pendingRequest = { key, id: crypto.randomUUID() };
+  requestStored = false;
+  try {
+    localStorage.setItem(REQUEST_KEY, JSON.stringify(pendingRequest));
+    requestStored = true;
+  } catch {}
+  return pendingRequest.id;
+}
+
+/** A delayed response must not remove another tab's newer attempt. */
+export function finishReservationRequest(basket, requestId) {
+  const current = readRequest();
+  if (current?.key !== basketFingerprint(basket) || current?.id !== requestId)
+    return false;
+  pendingRequest = null;
+  requestStored = false;
+  try {
+    localStorage.removeItem(REQUEST_KEY);
+    requestStored = true;
+  } catch {}
+  return true;
+}
 
 const isText = (v) => typeof v === "string" && v.length > 0 && v.length <= 120;
 

@@ -43,6 +43,9 @@ export default async function SearchPage({ searchParams }) {
   const q = one(params.q).slice(0, 60);
   const tooShort = q.trim().length < MIN_QUERY;
   const { coords, form } = readLocation(params);
+  // Distances from a picked area are from its centre, so they are approximate.
+  const fromAreaName =
+    form?.kind === "area" ? findArea(form.id)?.name : undefined;
 
   const result = await searchMedicine({
     query: tooShort ? "" : q,
@@ -79,7 +82,7 @@ export default async function SearchPage({ searchParams }) {
       {searched && withinRadius.length === 0 && outsideRadius.length === 0 && (
         <EmptyState
           icon={PackageSearch}
-          title={`No pharmacy has "${q}" right now`}
+          title={`No matching stock for "${q}" in participating pharmacies`}
           description="Check the spelling, or try the generic name (for example Paracetamol instead of Napa)."
         />
       )}
@@ -95,7 +98,11 @@ export default async function SearchPage({ searchParams }) {
           </h2>
           <ul className="space-y-3">
             {withinRadius.map((r) => (
-              <ResultCard key={`${r.pharmacyId}-${r.medicine.id}`} result={r} />
+              <ResultCard
+                key={`${r.pharmacyId}-${r.medicine.id}`}
+                result={r}
+                fromAreaName={fromAreaName}
+              />
             ))}
           </ul>
         </section>
@@ -113,7 +120,11 @@ export default async function SearchPage({ searchParams }) {
           </p>
           <ul className="space-y-3">
             {outsideRadius.map((r) => (
-              <ResultCard key={`${r.pharmacyId}-${r.medicine.id}`} result={r} />
+              <ResultCard
+                key={`${r.pharmacyId}-${r.medicine.id}`}
+                result={r}
+                fromAreaName={fromAreaName}
+              />
             ))}
           </ul>
         </section>
