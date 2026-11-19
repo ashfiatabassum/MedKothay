@@ -1,7 +1,7 @@
 # Project status and next handoff
 
 **Updated:** 19 November 2026
-**Phase:** M0 and the UI phase complete and live. **Workflow reviews in progress:** pharmacy (D7–D12) and customer (D13–D16) reviews accepted; admin review pending. Then R1 (small UI changes) and **B1 (backend)**.
+**Phase:** M0 and the UI phase complete and live. **All three workflow reviews accepted** (pharmacy D7–D12, customer D13–D16, admin D17–D21). Next: **R1** (the UI changes they require, on sample data), then **B1 (backend)**.
 
 - Live: https://med-kothay.vercel.app (auto-deploys from `main`)
 - Repo: https://github.com/ashfiatabassum/MedKothay (public)
@@ -20,6 +20,7 @@
 - Demo accounts (password `demo-password`, all `@medkothay.test`): `customer`, `pharmacy` (approved Lazz Pharma), `newpharmacy` (no shop yet: step 2), `pending` (Green Life, pending), `rejected` (MediCare Point, rejected with a reason), `admin`.
 - Pharmacy registration (D6, 18 Nov): shop name, address, area, map location, shop phone, DGDA licence number, licence photo (≤ 5 MB, checked by content; server action body limit 6 MB), licence expiry; status banner on the dashboard; two emails from W1 (developer will set up a Gmail app password).
 - Theme (18 Nov): white and deep blue `#0B5CAD`, blue-white background, amber accent for pickup code and countdown (`CLAUDE.md` "Theme").
+- Admin workflow review (19 Nov), accepted: D17 no approval of an expired licence; D18 `suspended` status (leaves search, active reservations cancelled, owner can resubmit); D19 duplicate licence warning; D20 catalog edit warning, no delete; D21 review metadata (submitted/reviewed at/by, previous reason, location source); plus wording and small UI (in R1).
 - Customer workflow review (19 Nov), accepted: D13 price check before holding; D14 safe retry with a request id; D15 at most 3 active reservations per customer; D16 fallback shows 3 distinct shops; plus wording and small UI fixes (in R1).
 - Pharmacy workflow review (19 Nov), accepted: D7 resubmit same shop; D8 reservation item price snapshot; D9 expired stock unavailable; D10 expired holds released in every stock function; D11 unit follows the form; D12 shops with an expired licence leave search. Details in `docs/data-model.md`.
 - Data model decisions D1–D4 (18 Nov): sign-up offers customer or pharmacy owner, but the role is written by the database; licence photos in a private bucket; location from the browser or an area picker, 5 km radius; **one reservation = one shop, many medicines, one pickup code** (new `reservation_items` table). Details in `docs/data-model.md`.
@@ -43,6 +44,6 @@
 
 ## Next task
 
-Start **B1 (backend)** on `feature/b1-schema` after the U4 PR is merged: migrations, RLS, stock functions and seed, with `supabase-postgres-best-practices` + `review-supabase-model`. Return shapes must match `lib/data/*`. The B1 checklist in `plan.md` now includes the security reviewers' SQL requirements (U1b, U3, U4).
+Start **R1 (workflow review changes)** on `feature/r1-review-changes`: the UI items listed in `plan.md` R1 from all three reviews, on sample data. Then **B1** on `feature/b1-schema`, whose checklist already includes D7–D21.
 
 Order: U1 → U2 → U3 → U4 → B1 (backend) → W1–W3 (wire up) → F. Data-model decisions D1–D4 are already confirmed (`docs/data-model.md`).

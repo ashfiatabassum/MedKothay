@@ -61,6 +61,8 @@ mobile app.
    read a quantity in JavaScript, subtract, and write it back — two users will
    overwrite each other and the reservation logic will break.
 4. Every pharmacy-owned table has a `pharmacy_id` column and an RLS policy.
+   Exceptions: `reservation_items` and `sale_items` are scoped through their
+   parent (`reservations`, `sales`).
 5. Server Components by default. Add `"use client"` only where you need state or
    events.
 
@@ -127,6 +129,16 @@ mobile app.
 **Admin**
 - List pharmacies pending approval
 - View licence details and photo, approve or reject with a reason
+- Approval is refused for an already expired licence (D17); a licence
+  expiring within 30 days only warns. Approve asks for confirmation, with a
+  short checklist shown above the decision
+- **Suspend** an approved shop with a reason (D18): it leaves search at once,
+  its active reservations are cancelled (holds released) and the owner can
+  correct and resubmit
+- Duplicate licence numbers (normalized) are flagged on the review page, not
+  blocked (D19)
+- Catalog edits warn "used by N pharmacies" and ask for confirmation; no
+  delete in this build (D20)
 - Minimal master medicine catalog screen
 
 ### Do NOT build these
@@ -178,8 +190,14 @@ pharmacies
   licence_number    text
   licence_photo_url text
   licence_expiry    date
-  status            text  -- 'pending' | 'approved' | 'rejected'
-  rejection_reason  text nullable
+  status            text  -- 'pending' | 'approved' | 'rejected' | 'suspended' (D18)
+  rejection_reason  text nullable  -- reason for rejected or suspended
+  previous_rejection_reason text nullable -- kept on resubmit (D21)
+  licence_number_normalized text -- uppercase, no spaces; duplicate check (D19)
+  location_source   text  -- 'area' | 'device' (D21)
+  submitted_at      timestamptz   -- first submit, updated on resubmit (D21)
+  reviewed_at       timestamptz nullable (D21)
+  reviewed_by       uuid nullable, references profiles (D21)
   created_at        timestamptz
 
 medicines                       -- master catalog, shared by all pharmacies

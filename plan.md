@@ -81,7 +81,7 @@ Fields and status decided 18 Nov (D6). A second demo pharmacy account without a 
 
 ## R1: Workflow review changes (UI, before B1)
 
-From the external workflow reviews (pharmacy accepted 19 Nov; customer and admin to follow).
+From the external workflow reviews of the pharmacy, customer and admin sides (all accepted 19 Nov; decisions D7–D21).
 
 - [ ] "Expired" badge in owner inventory; expired rows shown as unavailable (D9)
 - [ ] Unit wording everywhere: "per tablet / capsule / bottle / vial" (D11)
@@ -89,6 +89,7 @@ From the external workflow reviews (pharmacy accepted 19 Nov; customer and admin
 - [ ] Wording fixes from the review (photo hint, "Shop location", Rx check, missing medicine, Verified tooltip)
 - [ ] Customer review: Rx list + whole-basket note before Reserve; "Nothing has been reserved"; "Pick up by HH:MM"; Expired on the confirmation screen; Call and Directions; coverage and area-centre distance wording; new-basket, add-another and search-again links; soonest-to-expire first; Bangla digits in phone numbers; trusted-person pickup note
 - [ ] Price-changed confirmation in the basket (D13) and request id on Reserve (D14), on sample data; 3-active limit message (D15); fallback = 3 distinct shops (D16)
+- [ ] Admin review: Approve confirmation with shop + licence number; checklist above the decision; expired licence refused (D17); Suspend with reason on approved shops, owner banner and resubmit, customer reservations shown cancelled "pharmacy unavailable" (D18); duplicate-licence warning (D19); "used by N pharmacies" confirm on catalog edits (D20); location source and previous rejection reason on the review page (D21); best-effort email wording
 
 ## B1: Backend (schema, RLS, stock functions, seed)
 
@@ -97,6 +98,7 @@ Decisions D1–D4 are confirmed in `docs/data-model.md` (role choice at sign-up;
 - [ ] Migrations for all tables in `CLAUDE.md` "Data model" (including `reservation_items`), with CHECK constraints and indexes
 - [ ] `profiles` row created by an `auth.users` trigger from the sign-up account type (`customer` → customer, `pharmacy` → pharmacist, anything else → customer; D5); `full_name` and `phone` saved; role and `pharmacy_id` not user-editable
 - [ ] Reservation functions refuse non-customer callers (pharmacy accounts cannot reserve)
+- [ ] Admin review (D17–D21): `approve_pharmacy` refuses an expired licence; `suspend_pharmacy(id, reason)` (admin, approved only) cancels the shop's active reservations and releases holds in one transaction; status CHECK includes 'suspended' and search excludes it; `licence_number_normalized` + index and a duplicate lookup; medicines stock-usage count for the edit warning; columns `submitted_at`, `reviewed_at`, `reviewed_by`, `previous_rejection_reason`, `location_source`; seed includes a pending shop with a near-expiry licence
 - [ ] Customer review (D13–D16): `reserve(p_pharmacy_id, p_items with expected unit prices, p_request_id)` returns new prices without holding if any changed; unique `(customer_id, client_request_id)` returns the existing reservation on retry; max 3 active per customer after lazy expiry; `search_medicine` fallback = nearest 3 distinct pharmacies
 - [ ] Workflow review (D7–D12): `resubmit_pharmacy` RPC (same row, back to pending, owner only, rejected only); `reservation_items.unit_price` set in `reserve`; expired stock (expiry_date < today Dhaka) = available 0 in search, reserve and sale; every stock function releases expired holds first; search excludes shops with expired licences
 - [ ] Admin (security review U4): `approve_pharmacy(id)` / `reject_pharmacy(id, reason)` as `SECURITY DEFINER`, `search_path = ''`, admin check on `auth.uid()` inside, `update … where id = $1 and status = 'pending'` (error if no row), reason 10–300 in SQL, `EXECUTE` revoked from `public`/`anon`; pharmacists can't update `status`, `rejection_reason` or licence columns; `medicines` insert/update admin-only (`USING` + `WITH CHECK` from `profiles.role`), unique `(lower(brand_name), replace(lower(strength),' ',''), form)`, CHECKs for form list and lengths; latitude/longitude range CHECKs; phone format CHECK
@@ -108,7 +110,7 @@ Decisions D1–D4 are confirmed in `docs/data-model.md` (role choice at sign-up;
 - [ ] Functions: `search_medicine` (5 km + nearest-outside fallback), `reserve` (basket, all or nothing, lock order by `medicine_id`), `cancel_reservation`, `collect_reservation` (pickup code), `complete_sale`, lazy expiry
 - [ ] Seed: ~100 Bangladeshi medicines, 6-8 Dhaka pharmacies (one pending), varied stock, area centre points
 
-**Done when:** advisors clean; SQL tests per role pass, including: two customers racing for the last unit (exactly one succeeds); a basket where one item is short (nothing held, short item named); two overlapping baskets at once (no deadlock); a sale blocked by holds; a user cannot set their own role; an expired hold is released before a sale of those units; expired stock is not found by search and cannot be reserved or sold; a shop with a past licence_expiry is not in search; a price change after reserving does not change the reservation's total; a reserve with outdated prices holds nothing; the same request id twice gives one reservation; a 4th active reservation is refused; the fallback lists 3 distinct shops; a direct `/auth/v1/signup` with `{account_type:'admin', role:'admin', pharmacy_id:…}` gives a `customer` with no pharmacy; a pharmacist calling `reserve` is refused; two concurrent `register_pharmacy` calls give one shop; `docs/data-model.md` matches the migrations.
+**Done when:** advisors clean; SQL tests per role pass, including: two customers racing for the last unit (exactly one succeeds); a basket where one item is short (nothing held, short item named); two overlapping baskets at once (no deadlock); a sale blocked by holds; a user cannot set their own role; an expired hold is released before a sale of those units; expired stock is not found by search and cannot be reserved or sold; a shop with a past licence_expiry is not in search; a price change after reserving does not change the reservation's total; a reserve with outdated prices holds nothing; the same request id twice gives one reservation; a 4th active reservation is refused; the fallback lists 3 distinct shops; approving an expired licence is refused; suspending a shop removes it from search and cancels its active reservations with their holds released; a direct `/auth/v1/signup` with `{account_type:'admin', role:'admin', pharmacy_id:…}` gives a `customer` with no pharmacy; a pharmacist calling `reserve` is refused; two concurrent `register_pharmacy` calls give one shop; `docs/data-model.md` matches the migrations.
 
 ## W1: Wire auth, registration and admin
 
