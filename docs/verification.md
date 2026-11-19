@@ -1,5 +1,68 @@
 # Verification log
 
+## B1 implementation complete — 19 November 2026 (Codex)
+
+The user authorized Supabase changes and completing B1 on `feature/b1-schema` against linked production project `gkzqlpaknytdvbbknaxp`. The UI still uses sample data until W1–W3.
+
+| Check                    | Observed                                                                                                                                    | Result                         |
+| ------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------ |
+| Migrations and RLS       | Nine migrations applied; eight app tables, transactional RPCs, invoker wrappers and RLS present                                             | Pass                           |
+| Licence Storage          | Private `licences` bucket with 5 MB image limit; owner upload/read/update, admin read; other-owner and anonymous reads refused              | Pass                           |
+| Seed                     | 100 medicines from pinned MIT-licensed MedEx commit, 8 fictional Dhaka shops, 526 stock rows and one visibly invalid generated demo licence | Pass                           |
+| Live integration         | `scripts/verify-b1.mjs` passed 18 role, RLS, workflow and concurrency groups; uniquely prefixed temporary fixtures were removed             | Pass                           |
+| Hosted Auth              | Forged admin/shop signup metadata produced a customer without a shop; email confirmation changed from true to false to match D5             | Pass                           |
+| Search smoke             | Napa nearby results; Seclo/Uttara exactly three distinct outside-radius shops; `zzz` none; pending hidden                                   | Pass                           |
+| Security advisors        | No issues after revoking public execution of the pre-existing RLS helper                                                                    | Pass                           |
+| Project checks           | `npm run lint` and `npm run build`                                                                                                          | Pass                           |
+| Required subagent review | Code, security and requirements agents each failed immediately because the Claude account usage limit was exhausted                         | Blocked; must run before merge |
+
+The 18 live groups cover metadata forgery, role and RLS boundaries, concurrent registration and reservation, private Storage, admin decisions, price snapshots and idempotency, whole-basket pickup, last-unit and opposite-lock-order races, lazy expiry, suspension, stock/licence expiry, active-reservation limits and pharmacist refusal.
+
+Skills used: `supabase` for linked migrations/configuration/Storage/seed/advisors; `supabase-postgres-best-practices` for grants, invoker wrappers, checks, indexes, locks and RLS; `review-supabase-model` for model invariants; `imagegen` for the clearly invalid, fictional demo licence asset.
+
+Corrections made during implementation: public execution of the existing RLS helper was revoked; privileged implementations were moved to the unexposed `private` schema behind invoker wrappers; the hosted email-confirmation setting was aligned with D5; the integration test was corrected to treat an RLS-filtered update as zero rows; public-signup test domains were changed after hosted Auth refused reserved domains. No application email was sent.
+
+Review waiver: the developer explicitly instructed Codex to merge without the unavailable subagent reviews on 19 November to finish within the deadline. Applied migrations remain immutable; database corrections require a new migration.
+
+### Earlier B1 checkpoint (superseded)
+
+## B1 start — 19 November 2026 (Codex)
+
+The user authorized Supabase changes and starting B1. Work is on `feature/b1-schema` against linked production project `gkzqlpaknytdvbbknaxp`. This is a partial milestone; the UI still uses sample data.
+
+| Check                                              | Observed result                                                                                                                                                                                                                      | Status                                                             |
+| -------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | ------------------------------------------------------------------ |
+| Security advisor before fix                        | Two warnings: `public.rls_auto_enable()` executable by `anon` and `authenticated`                                                                                                                                                    | Confirmed                                                          |
+| Trigger inspection                                 | `ensure_rls` is an enabled `ddl_command_end` event trigger owned by `postgres`; function is `SECURITY DEFINER`, and its ACL explicitly granted client execution                                                                      | Confirmed                                                          |
+| `restrict_rls_auto_enable_execute`                 | Remote migration applied after dry run. `anon`/`authenticated` execute = false, `service_role` execute = true; trigger remains present                                                                                               | Pass                                                               |
+| `core_schema`                                      | Remote migration applied after dry run. Eight intended tables present, all RLS enabled; `anon`/`authenticated` had no table SELECT grant before policies                                                                             | Pass                                                               |
+| `access_policies`                                  | Remote migration applied after dry run. Only catalog has anon SELECT grant; private tables are readable through RLS only to signed-in participants. Signup trigger enabled; its function and admin helper are not executable by anon | Pass for catalog/grant inspection; role behavior still needs tests |
+| Remote security advisor after all three migrations | `No issues found`                                                                                                                                                                                                                    | Pass                                                               |
+| Role, signup, concurrency and stock RPC tests      | Functions/seed not yet present; no real signup or role impersonation performed                                                                                                                                                       | Not run — remaining B1 work                                        |
+
+### Skill usage log (B1)
+
+| Skill                                        | Work / result                                                                                                                                                                              |
+| -------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `supabase` (project)                         | Read v3 CLI help and current Supabase changelog/RLS/migration docs; used `db query --remote --read-only`, migration dry runs and remote pushes; verified applied state and advisor results |
+| `supabase-postgres-best-practices` (project) | Applied least-privilege grants, constraints, FK indexes and RLS from first table creation                                                                                                  |
+| `review-supabase-model` (project)            | Checked one stock row per shop/medicine, no public exact stock grants, one basket with many items, request-ID uniqueness and no user metadata in authorization                             |
+
+### Issues and corrections log (B1)
+
+| Issue                                                          | Source / detection                                   | Correction                                                          |
+| -------------------------------------------------------------- | ---------------------------------------------------- | ------------------------------------------------------------------- |
+| Existing event-trigger function callable by client roles       | Remote security advisor and `pg_proc` ACL inspection | Revoked client EXECUTE in versioned migration; advisor now clean    |
+| Documentation patch missed a Prettier-aligned STATUS table row | Codex patch verification                             | Patch made no change; used exact row replacement and formatted docs |
+
+Role impersonation attempt: CLI `db query --read-only` rejected `SET LOCAL ROLE` as a non-SELECT statement before execution; no database change. Role behavior remains for the planned SQL tests.
+
+### Next B1 work
+
+Implement registration, owner correction, admin approval/rejection/suspension and catalog usage RPCs, then transactional stock/search/reservation/sale RPCs. Add private licence storage and seed. Run SQL role tests, last-unit and overlapping-basket concurrency tests, and advisors before marking B1 complete or merging. The three applied migrations must never be edited; add a new migration to correct any issue.
+
+---
+
 Record **observed** results only. A planned test is not a pass. Use test accounts and seed data; no real customer data in screenshots or commits.
 
 ## Environment
