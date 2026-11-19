@@ -58,7 +58,7 @@ Agreed in chat instead of a `grill-me` session (no time that day). Claude propos
 
 ## As built (B1)
 
-Nine migrations are applied to the linked Supabase project:
+Migrations 1–12 are applied to the linked Supabase project; 13 (W3) is written but **not yet applied**:
 
 1. `restrict_rls_auto_enable_execute` keeps the existing RLS event trigger active while revoking its helper from public callers.
 2. `core_schema` creates the eight intended tables (`profiles`, `pharmacies`, `medicines`, `pharmacy_stock`, `reservations`, `reservation_items`, `sales`, `sale_items`) with UUID keys, foreign keys, checks, lookup indexes, unique stock/medicine identities and RLS. The Auth trigger accepts only the whitelisted account type, name and phone and ignores forged role/shop metadata.
@@ -69,9 +69,18 @@ Nine migrations are applied to the linked Supabase project:
 7. `stock_transactions` implements anonymous band-only search, idempotent all-or-nothing reserve, cancellation, collection, counter sale, lazy expiry and customer reservation reads. Stock rows are locked in deterministic medicine order.
 8. `search_and_suspension` finalizes distinct-shop fallback search and suspension behavior.
 9. `inventory_management` adds owner stock management and prevents collection from expired stock.
+10. `owner_cleanup_unused_licence` (W1) lets an owner delete their own licence uploads that no pharmacy row references (failed registration or a replaced photo).
+11. `admin_owner_email_lookup` (W1) adds admin-only `pharmacy_owner_email(id)` for decision emails; `auth.users` stays unexposed.
+12. `protect_referenced_licence_delete` (W1) qualifies `objects.name` in that delete policy; unqualified, it resolved to `pharmacies.name` and allowed deleting a referenced photo.
+13. `w3_pickup_code_and_shop_reservations` (W3, security review U3 M2):
+    - `reservations.failed_code_attempts` (smallint, default 0, ≥ 0).
+    - `reserve` makes the pickup code from `extensions.gen_random_bytes` and **returns** `limit`, `shop_unavailable`, or `unavailable` with `reason` (`not_stocked` / `expired` / `short`) and the `medicineId`, instead of raising. Nothing is held on those returns.
+    - New `collect_pickup(reservation_id, code)` returns `collected`, `no_match` (wrong code, or a reservation that is not this shop's), `not_active`, `locked` (5 wrong codes) or `expired_item`. It returns instead of raising, so the attempt counter is kept. `collect_reservation` is revoked from `authenticated` (not dropped).
+    - New `get_shop_reservations()` for the pharmacist: own shop, newest 100, customer `full_name`, items and a `locked` flag; never the pickup code. Releases lapsed holds first (D10).
+    - Direct `select` on `reservations` is limited to `id, pharmacy_id, customer_id, status, cancellation_reason, expires_at, created_at`, so `pickup_code`, `client_request_id` and `failed_code_attempts` are readable only through the functions.
 
 The seed contains 100 medicine rows derived from the pinned MIT-licensed MedEx dataset commit `2b5c93b0ef4ed27cb10f23e1892996eb2e12bd51`, eight fictional Dhaka pharmacies (seven approved, one pending), 526 varied stock rows, expired stock coverage and a clearly invalid generated demo licence image in private storage. Hosted Auth email confirmation is off, matching D5.
 
 `scripts/verify-b1.mjs` passed 18 live integration groups covering signup metadata forgery, role and RLS boundaries, concurrent registration and reservation, private Storage, all admin decisions, price snapshots and idempotency, whole-basket pickup, last-unit and opposite-lock-order races, lazy expiry, suspension, stock/licence expiry, active-reservation limits and pharmacist refusal. Security advisors, lint and build are clean.
 
-W1–W3 have not wired the app to these tables; the live UI remains on sample data. The required subagent review gate was explicitly waived by the developer after the agents could not start because of the account usage limit.
+W1–W3 wiring is written on stacked branches (`feature/w1-…` → `w2-…` → `w3-…`) but not yet tested or merged; the live UI remains on sample data until they merge. For B1, the required subagent review gate was explicitly waived by the developer after the agents could not start because of the account usage limit.

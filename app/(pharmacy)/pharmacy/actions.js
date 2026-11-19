@@ -268,18 +268,24 @@ export async function completeSaleAction(payload) {
 export async function collectAction(_prev, fd) {
   const own = await ownPharmacy();
   if (own.error) return { status: "error", message: own.error };
-  const reservationId = text(fd, "reservationId").slice(0, 64);
+  const reservationId = text(fd, "reservationId");
   const code = text(fd, "code").replace(/\s/g, "");
   if (!/^\d{6}$/.test(code))
     return {
       status: "error",
       message: "Enter the 6-digit pickup code from the customer.",
     };
-  const r = await collectReservation({
-    pharmacyId: own.pharmacy.id,
-    reservationId,
-    code,
-  });
+  if (!isUuid(reservationId))
+    return {
+      status: "error",
+      message: "That pickup code doesn't match this reservation.",
+      code,
+    };
+  const r = await collectReservation({ reservationId, code });
+  if (r.ok) {
+    refreshStockPages();
+    revalidatePath("/pharmacy/reservations");
+  }
   return r.ok
     ? { status: "collected" }
     : { status: "error", message: r.error, code };

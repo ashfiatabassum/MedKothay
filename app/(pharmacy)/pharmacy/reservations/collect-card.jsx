@@ -98,9 +98,6 @@ export function CollectCard({ reservation: r }) {
         >
           <CircleCheck className="size-4" aria-hidden="true" />
           Collected. Stock is reduced for every item.
-          <span className="text-xs text-muted-foreground">
-            (demo: saved from step W3)
-          </span>
         </p>
       ) : status === "active" ? (
         <form
