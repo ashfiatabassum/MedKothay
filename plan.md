@@ -69,15 +69,15 @@ Fields and status decided 18 Nov (D6). A second demo pharmacy account without a 
 - [x] Counter sale: search by brand or generic, add items, complete; "N units are reserved" block message
 - [x] Incoming reservations: items, countdown, enter pickup code, mark collected
 
-**Done when:** each screen works on mock data, including the blocked-by-holds message and the wrong-pickup-code error. **Met 18 Nov** (Playwright U3 runs 1–6). Not saved until W1–W3: registration, stock edits, sales, collection; a newly created pharmacy account must sign in as a sample account to reach step 2.
+**Done when:** each screen works on mock data, including the blocked-by-holds message and the wrong-pickup-code error. **Met 18 Nov** (Playwright U3 runs 1–6). Not saved until W1–W3: registration, stock edits, sales, collection; since 19 Nov, Create account continues straight to step 2 (demo session until W1).
 
 ## U4: Admin screens
 
-- [ ] Pending pharmacies list
-- [ ] Licence review: details and photo, approve, reject with a reason
-- [ ] Minimal medicine catalog: list, add, edit
+- [x] Pending pharmacies list
+- [x] Licence review: details and photo, approve, reject with a reason
+- [x] Minimal medicine catalog: list, add, edit
 
-**Done when:** approve and reject flows work on mock data; the pending list empty state shows.
+**Done when:** approve and reject flows work on mock data; the pending list empty state shows. **Met 19 Nov** (Playwright U4 runs 1–4; the empty state is reached by searching the pending tab, because decisions are not saved until W1).
 
 ## B1: Backend (schema, RLS, stock functions, seed)
 
@@ -86,6 +86,7 @@ Decisions D1–D4 are confirmed in `docs/data-model.md` (role choice at sign-up;
 - [ ] Migrations for all tables in `CLAUDE.md` "Data model" (including `reservation_items`), with CHECK constraints and indexes
 - [ ] `profiles` row created by an `auth.users` trigger from the sign-up account type (`customer` → customer, `pharmacy` → pharmacist, anything else → customer; D5); `full_name` and `phone` saved; role and `pharmacy_id` not user-editable
 - [ ] Reservation functions refuse non-customer callers (pharmacy accounts cannot reserve)
+- [ ] Admin (security review U4): `approve_pharmacy(id)` / `reject_pharmacy(id, reason)` as `SECURITY DEFINER`, `search_path = ''`, admin check on `auth.uid()` inside, `update … where id = $1 and status = 'pending'` (error if no row), reason 10–300 in SQL, `EXECUTE` revoked from `public`/`anon`; pharmacists can't update `status`, `rejection_reason` or licence columns; `medicines` insert/update admin-only (`USING` + `WITH CHECK` from `profiles.role`), unique `(lower(brand_name), replace(lower(strength),' ',''), form)`, CHECKs for form list and lengths; latitude/longitude range CHECKs; phone format CHECK
 - [ ] Sign-up trigger (security review, U1b): `SECURITY DEFINER`, `SET search_path = ''`, INSERT only; reads **only** `account_type` (exactly `'pharmacy'` → pharmacist, anything else → customer), `full_name` (length-capped) and `phone` (format-checked) from metadata; never copies `role`, `pharmacy_id` or `status`; no `user_metadata` anywhere in RLS
 - [ ] `register_pharmacy` locks the caller's profile (`FOR UPDATE`) so two concurrent calls create one shop; reservation functions check `role = 'customer'` (not `<> 'pharmacist'`); `REVOKE EXECUTE ... FROM PUBLIC, anon` on every RPC that needs a signed-in user; no pharmacy policy uses `coalesce`/`IS NOT DISTINCT FROM` on `pharmacy_id` (a pharmacist without a shop must see nothing)
 - [ ] `register_pharmacy` function: creates the `pending` shop and sets the caller's `pharmacy_id` in one transaction; accepts only a pharmacist without a pharmacy (the role itself comes from the sign-up trigger, D5)
@@ -103,6 +104,7 @@ Decisions D1–D4 are confirmed in `docs/data-model.md` (role choice at sign-up;
 - [ ] Auth hardening (security review, U1b): map every Supabase sign-in/sign-up error to the neutral messages (never show raw Supabase text); confirm Supabase Auth rate limits; any `?next=` return path must be a same-origin path (starts with `/`, not `//`, no ``, no scheme); every protected page and action checks `getClaims`/role on the server, not only in `proxy.js`; remove `mockAccounts` and the mock auth path
 - [ ] Registration form saves through `register_pharmacy` and uploads the licence photo
 - [ ] Admin pending list, licence photo, approve and reject on real data; catalog on real data
+- [ ] Admin hardening (security review U4): validate ids as UUIDs before calling Supabase (generic error, no raw Postgres text); licence photo shown via a short-lived signed URL from an admin-only storage policy; escape the rejection reason in the HTML email
 - [ ] Emails (D6): "registration received" and the approve/reject result via Gmail app password (developer sets `GMAIL_USER`/`GMAIL_APP_PASSWORD` in `.env.local` and Vercel as Secret); best effort
 
 **Done when:** demo loop steps 1–2 pass on the live site (register → pending → admin approves).

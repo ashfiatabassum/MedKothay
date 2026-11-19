@@ -15,7 +15,12 @@ const NAV = {
     { href: "/pharmacy/reservations", label: "Reservations" },
   ],
   admin: [
-    { href: "/admin", label: "Pending pharmacies", exact: true },
+    {
+      href: "/admin",
+      label: "Pharmacies",
+      exact: true,
+      also: "/admin/pharmacies",
+    },
     { href: "/admin/catalog", label: "Medicine catalog" },
   ],
 };
@@ -63,7 +68,7 @@ export function SiteHeader({ area = "customer", links: customLinks, right }) {
             className="order-last -mx-4 flex w-[calc(100%+2rem)] flex-wrap gap-1 border-t px-3 py-1 md:order-none md:mx-0 md:ml-4 md:w-auto md:flex-nowrap md:border-0 md:p-0"
           >
             {links.map((l) => (
-              <NavLink key={l.href} href={l.href} exact={l.exact}>
+              <NavLink key={l.href} href={l.href} exact={l.exact} also={l.also}>
                 {l.label}
               </NavLink>
             ))}

@@ -2,15 +2,14 @@
 
 import { useActionState, useRef, useState } from "react";
 import Link from "next/link";
-import { CircleCheck, Search, Store } from "lucide-react";
+import { Search, Store } from "lucide-react";
 import {
   FormField,
-  SuccessHeading,
   PasswordInput,
   TextInput,
   useFocusFirstError,
 } from "@/components/form-field";
-import { Button, buttonVariants } from "@/components/ui/button";
+import { Button } from "@/components/ui/button";
 import { PASSWORD_MAX, PASSWORD_MIN } from "@/lib/validation";
 import { cn } from "@/lib/utils";
 import { signUpAction } from "./actions";
@@ -30,8 +29,8 @@ const TYPES = [
   },
 ];
 
-// W1: signing up will also start the session, so "Continue" really continues
-// (in the demo the new account is not saved, so the user is asked to sign in).
+// Creating an account signs the person in and continues (demo session until
+// W1; Supabase signUp from W1).
 export function SignUpForm({ defaultType, next, signInHref = "/sign-in" }) {
   const [state, formAction, pending] = useActionState(signUpAction, {
     status: "idle",
@@ -44,37 +43,8 @@ export function SignUpForm({ defaultType, next, signInHref = "/sign-in" }) {
     state.emailTaken ? "#signup-email" : 'input[name="accountType"]',
   );
 
-  if (state.status === "created") {
-    const pharmacy = state.accountType === "pharmacy";
-    return (
-      <div
-        role="status"
-        className="flex flex-col items-center gap-3 rounded-xl border bg-card px-5 py-8 text-center"
-      >
-        <CircleCheck className="size-10 text-primary" aria-hidden="true" />
-        <SuccessHeading>Account created</SuccessHeading>
-        <p className="max-w-sm text-sm text-muted-foreground">
-          {pharmacy
-            ? "Next, register your pharmacy. It stays hidden from customers until an admin approves it."
-            : "You can now reserve medicines from pharmacies near you."}
-        </p>
-        <Link
-          href={pharmacy ? "/pharmacy/register" : (next ?? "/")}
-          className={buttonVariants()}
-        >
-          {pharmacy
-            ? "Register your pharmacy"
-            : next
-              ? "Continue"
-              : "Search medicines"}
-        </Link>
-        <p className="rounded-md bg-muted px-3 py-2 text-xs text-muted-foreground">
-          Demo: accounts are saved from step W1. Nothing was saved yet.
-        </p>
-      </div>
-    );
-  }
-
+  // On success the server action redirects (pharmacy → step 2, customer → where
+  // they were going), so this form only ever shows errors.
   const errors = state.fieldErrors ?? {};
   const v = state.values ?? {};
   const type = picked ?? (v.accountType || defaultType);
@@ -82,11 +52,7 @@ export function SignUpForm({ defaultType, next, signInHref = "/sign-in" }) {
 
   return (
     <form ref={formRef} action={formAction} noValidate className="space-y-5">
-      {owner && (
-        <p className="text-sm font-medium text-primary">
-          Step 1 of 2: your account. Next, your pharmacy&apos;s details.
-        </p>
-      )}
+      {next && <input type="hidden" name="next" value={next} />}
       <p className="text-sm text-muted-foreground">All fields are required.</p>
       {state.formError && (
         <p
@@ -152,6 +118,16 @@ export function SignUpForm({ defaultType, next, signInHref = "/sign-in" }) {
           </p>
         )}
       </fieldset>
+
+      {owner && (
+        <div className="rounded-lg border border-primary/30 bg-secondary px-3 py-2 text-sm text-secondary-foreground">
+          <p className="font-semibold">Step 1 of 2: your account</p>
+          <p>
+            Next you&apos;ll add your pharmacy: shop name, address, location,
+            shop phone and your DGDA licence (number, expiry and a photo).
+          </p>
+        </div>
+      )}
 
       <FormField
         id="signup-name"
