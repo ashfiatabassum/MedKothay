@@ -29,8 +29,7 @@ const TYPES = [
   },
 ];
 
-// Creating an account signs the person in and continues (demo session until
-// W1; Supabase signUp from W1).
+// Creating an account signs the person in (Supabase signUp) and continues.
 export function SignUpForm({ defaultType, next, signInHref = "/sign-in" }) {
   const [state, formAction, pending] = useActionState(signUpAction, {
     status: "idle",

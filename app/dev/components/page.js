@@ -37,7 +37,8 @@ export default async function ComponentsPage() {
   const dhanmondi = findArea("dhanmondi");
   const [search, reservations] = await Promise.all([
     searchMedicine({ query: "napa", lat: dhanmondi.lat, lng: dhanmondi.lng }),
-    getMyReservations("u-demo-customer"),
+    // Real data since W3: only a signed-in customer has reservations.
+    getMyReservations().catch(() => []),
   ]);
   const active = reservations.find((r) => r.status === "active");
 

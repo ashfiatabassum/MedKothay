@@ -467,11 +467,12 @@ targets a local Docker database by default; there is none here, so always pass
 
 ```bash
 npx supabase migration list --remote   # applied migrations on the hosted DB
+npx supabase migration new <name>      # new migration file in supabase/migrations
+npx supabase db push --remote --dry-run   # preview pending migrations
+npx supabase db push --remote          # apply them (agent runs need --yes after the developer agrees)
+npx supabase db advisors --remote      # security/performance checks
+npx supabase db query --remote --read-only -f <file.sql>   # read-only SQL
 ```
-
-Not yet run (move up once they work): `npx supabase migration new <name>`,
-`npx supabase db push` (apply migrations),
-`npx supabase db advisors --remote` (security/performance checks).
 
 - Health check: `GET /api/health` → 200 with `"supabase":"ok"` when env vars are
   set and Supabase is reachable.

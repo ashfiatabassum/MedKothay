@@ -143,6 +143,15 @@ const reserve = (client, shop, items, id = crypto.randomUUID()) =>
     p_items: items,
     p_request_id: id,
   });
+// W3: collect_pickup returns a status instead of raising (lockout counter).
+const collect = async (client, reservationId, code) =>
+  expectNoError(
+    await client.rpc("collect_pickup", {
+      p_reservation_id: reservationId,
+      p_pickup_code: code,
+    }),
+    "collect_pickup",
+  ).status;
 const selectStock = async (shop, med) =>
   expectNoError(
     await service
@@ -461,15 +470,13 @@ try {
   catalogFixtures.push(added.id);
   assert.ok(
     (
-      await customer.client
-        .from("medicines")
-        .insert({
-          brand_name: `B1 Bad ${runId}`,
-          generic_name: "Demo Compound",
-          manufacturer: "Demo Manufacturer",
-          strength: "1 mg",
-          form: "tablet",
-        })
+      await customer.client.from("medicines").insert({
+        brand_name: `B1 Bad ${runId}`,
+        generic_name: "Demo Compound",
+        manufacturer: "Demo Manufacturer",
+        strength: "1 mg",
+        form: "tablet",
+      })
     ).error,
   );
   const deniedEdit = await ownerA.client
@@ -552,21 +559,18 @@ try {
       })
     ).error,
   );
-  assert.ok(
-    (
-      await ownerB.client.rpc("collect_reservation", {
-        p_reservation_id: booked.reservationId,
-        p_pickup_code: booked.pickupCode,
-      })
-    ).error,
+  // Another shop's reservation gets the same answer as a wrong code.
+  assert.equal(
+    await collect(ownerB.client, booked.reservationId, booked.pickupCode),
+    "no_match",
   );
-  assert.ok(
-    (
-      await ownerA.client.rpc("collect_reservation", {
-        p_reservation_id: booked.reservationId,
-        p_pickup_code: "000000",
-      })
-    ).error,
+  assert.equal(
+    await collect(
+      ownerA.client,
+      booked.reservationId,
+      booked.pickupCode === "000000" ? "111111" : "000000",
+    ),
+    "no_match",
   );
   assert.ok(
     (
@@ -587,17 +591,23 @@ try {
     listed.find((r) => r.id === booked.reservationId).pickupCode,
     booked.pickupCode,
   );
-  expectNoError(
-    await ownerA.client.rpc("collect_reservation", {
-      p_reservation_id: booked.reservationId,
-      p_pickup_code: booked.pickupCode,
-    }),
-    "collect",
+  assert.equal(
+    await collect(ownerA.client, booked.reservationId, booked.pickupCode),
+    "collected",
   );
   assert.deepEqual(
     ((s) => [s.quantity, s.held_quantity])(await selectStock(shopA, napa)),
     [3, 0],
   );
+  // Review fix: replaying the request id of a finished reservation does not
+  // report a fresh success, and creates nothing (D14).
+  const replay = expectNoError(
+    await reserve(customer.client, shopA, item(napa, 1, 12), requestId),
+    "replay after collection",
+  );
+  assert.equal(replay.status, "ended");
+  assert.equal(replay.reservationId, booked.reservationId);
+  assert.equal((await selectStock(shopA, napa)).held_quantity, 0);
   pass("pickup collects whole reservation and reduces physical and held stock");
 
   await stock(shopA, napa, 3);
@@ -609,12 +619,9 @@ try {
     ]),
     "multi-item hold",
   );
-  expectNoError(
-    await ownerA.client.rpc("collect_reservation", {
-      p_reservation_id: multiple.reservationId,
-      p_pickup_code: multiple.pickupCode,
-    }),
-    "multi-item pickup",
+  assert.equal(
+    await collect(ownerA.client, multiple.reservationId, multiple.pickupCode),
+    "collected",
   );
   assert.deepEqual(
     ((s) => [s.quantity, s.held_quantity])(await selectStock(shopA, napa)),
@@ -626,18 +633,155 @@ try {
   );
   pass("one pickup code collects all medicines in a basket");
 
+  // W3: secure 6-digit code, hidden from direct reads, shop list with
+  // customer names, and a lockout after 5 wrong codes.
+  await stock(shopA, napa, 2);
+  const lockHold = expectNoError(
+    await reserve(customer.client, shopA, item(napa, 1, 12)),
+    "lockout hold",
+  );
+  assert.equal(lockHold.status, "reserved");
+  assert.match(lockHold.pickupCode, /^\d{6}$/);
+  for (const reader of [customer.client, ownerA.client])
+    assert.ok(
+      (
+        await reader
+          .from("reservations")
+          .select("pickup_code")
+          .eq("id", lockHold.reservationId)
+      ).error,
+      "pickup_code must not be readable directly",
+    );
+  const shopList = expectNoError(
+    await ownerA.client.rpc("get_shop_reservations"),
+    "shop reservations",
+  );
+  const listedHold = shopList.find((r) => r.id === lockHold.reservationId);
+  assert.equal(listedHold.customerName, "B1 customer");
+  assert.equal(listedHold.status, "active");
+  assert.equal(listedHold.items.length, 1);
+  assert.ok(!JSON.stringify(shopList).includes(lockHold.pickupCode));
+  assert.ok(
+    !expectNoError(
+      await ownerB.client.rpc("get_shop_reservations"),
+      "other shop list",
+    ).some((r) => r.id === lockHold.reservationId),
+  );
+  const wrongCode = lockHold.pickupCode === "000000" ? "111111" : "000000";
+  for (let n = 1; n <= 4; n++)
+    assert.equal(
+      await collect(ownerA.client, lockHold.reservationId, wrongCode),
+      "no_match",
+    );
+  assert.equal(
+    await collect(ownerA.client, lockHold.reservationId, wrongCode),
+    "locked",
+  );
+  assert.equal(
+    await collect(ownerA.client, lockHold.reservationId, lockHold.pickupCode),
+    "locked",
+  );
+  assert.ok(
+    expectNoError(
+      await ownerA.client.rpc("get_shop_reservations"),
+      "locked list",
+    ).find((r) => r.id === lockHold.reservationId).locked,
+  );
+  assert.deepEqual(
+    ((s) => [s.quantity, s.held_quantity])(await selectStock(shopA, napa)),
+    [2, 1],
+  );
+  expectNoError(
+    await customer.client.rpc("cancel_reservation", {
+      p_reservation_id: lockHold.reservationId,
+    }),
+    "cancel locked hold",
+  );
+  assert.equal((await selectStock(shopA, napa)).held_quantity, 0);
+  assert.equal(
+    (
+      await ownerA.client.rpc("collect_reservation", {
+        p_reservation_id: lockHold.reservationId,
+        p_pickup_code: lockHold.pickupCode,
+      })
+    ).error?.code,
+    "42501",
+    "old collect_reservation must be revoked",
+  );
+  pass(
+    "pickup code is 6 random digits, hidden from table reads, and locks after 5 wrong tries",
+  );
+
+  // Review fixes: a stale edit form cannot undo a sale; add is insert-only;
+  // quantity never below held; a referenced licence photo cannot be replaced.
+  await stock(shopA, napa, 2);
+  const save = async (expected, quantity) =>
+    expectNoError(
+      await ownerA.client.rpc("save_stock", {
+        p_medicine_id: napa,
+        p_expected_quantity: expected,
+        p_quantity: quantity,
+        p_selling_price: 12,
+        p_expiry_date: "2027-12-31",
+      }),
+      "save_stock",
+    );
+  assert.equal((await save(null, 9)).status, "exists");
+  assert.deepEqual(await save(7, 9), { status: "changed", quantity: 2 });
+  assert.equal((await selectStock(shopA, napa)).quantity, 2);
+  assert.equal((await save(2, 5)).status, "saved");
+  assert.equal((await selectStock(shopA, napa)).quantity, 5);
+  const heldForEdit = expectNoError(
+    await reserve(customer2.client, shopA, item(napa, 2, 12)),
+    "hold before edit",
+  );
+  assert.equal(heldForEdit.status, "reserved");
+  assert.deepEqual(await save(5, 1), { status: "below_held", held: 2 });
+  expectNoError(
+    await customer2.client.rpc("cancel_reservation", {
+      p_reservation_id: heldForEdit.reservationId,
+    }),
+    "release edit hold",
+  );
+  assert.ok(
+    (
+      await ownerA.client.storage
+        .from("licences")
+        .update(imageA, png, { contentType: "image/png", upsert: true })
+    ).error,
+    "referenced licence photo must not be overwritten",
+  );
+  assert.ok(
+    (
+      await ownerA.client.storage
+        .from("licences")
+        .move(imageA, `${ownerA.id}/b1-${runId}-moved.png`)
+    ).error,
+    "referenced licence photo must not be moved",
+  );
+  assert.equal(
+    (await service.storage.from("licences").download(imageA)).error,
+    null,
+  );
+  pass(
+    "stale stock edits are refused, add is insert-only, and referenced licence photos are immutable",
+  );
+
   await stock(shopA, napa, 1);
   const racing = await Promise.all([
     reserve(customer.client, shopA, item(napa, 1, 12)),
     reserve(customer2.client, shopA, item(napa, 1, 12)),
   ]);
-  assert.equal(
-    racing.filter((r) => !r.error && r.data.status === "reserved").length,
-    1,
-  );
+  const won = (r) => !r.error && r.data.status === "reserved";
+  assert.equal(racing.filter(won).length, 1);
+  // W3: the loser gets a result naming the short item, not an error.
+  const loser = racing.find((r) => !won(r));
+  assert.equal(loser.data?.status, "unavailable");
+  assert.equal(loser.data.reason, "short");
+  assert.equal(loser.data.medicineId, napa);
   assert.equal((await selectStock(shopA, napa)).held_quantity, 1);
-  const winner = racing.find((r) => !r.error).data;
-  const winnerClient = racing[0].error ? customer2.client : customer.client;
+  const winner = racing.find(won).data;
+  const winnerClient = won(racing[0]) ? customer.client : customer2.client;
   expectNoError(
     await winnerClient.rpc("cancel_reservation", {
       p_reservation_id: winner.reservationId,
@@ -659,7 +803,10 @@ try {
       { medicine_id: napa, quantity: 1, expected_unit_price: 12 },
     ]),
   ]);
-  assert.equal(overlapping.filter((r) => !r.error).length, 2);
+  assert.equal(
+    overlapping.filter((r) => !r.error && r.data.status === "reserved").length,
+    2,
+  );
   assert.equal((await selectStock(shopA, napa)).held_quantity, 2);
   pass("opposite-order overlapping baskets both complete without deadlock");
 
@@ -737,7 +884,12 @@ try {
     }),
     "expired stock fixture",
   );
-  assert.ok((await reserve(customer.client, shopB, item(seclo, 1, 7))).error);
+  const expiredHold = expectNoError(
+    await reserve(customer.client, shopB, item(seclo, 1, 7)),
+    "reserve expired stock",
+  );
+  assert.equal(expiredHold.status, "unavailable");
+  assert.equal(expiredHold.reason, "expired");
   assert.ok(
     (
       await ownerB.client.rpc("complete_sale", {
@@ -776,13 +928,13 @@ try {
     }),
     "expire held stock",
   );
-  assert.ok(
-    (
-      await ownerB.client.rpc("collect_reservation", {
-        p_reservation_id: heldThenExpired.reservationId,
-        p_pickup_code: heldThenExpired.pickupCode,
-      })
-    ).error?.message.includes("expiry date"),
+  assert.equal(
+    await collect(
+      ownerB.client,
+      heldThenExpired.reservationId,
+      heldThenExpired.pickupCode,
+    ),
+    "expired_item",
   );
   expectNoError(
     await customer2.client.rpc("cancel_reservation", {
@@ -800,14 +952,16 @@ try {
     "short stock fixture",
   );
   const beforeShort = (await selectStock(shopB, napa)).held_quantity;
-  assert.ok(
-    (
-      await reserve(customer.client, shopB, [
-        { medicine_id: napa, quantity: 1, expected_unit_price: 12 },
-        { medicine_id: seclo, quantity: 1, expected_unit_price: 7 },
-      ])
-    ).error?.message.includes("Seclo"),
+  const shortBasket = expectNoError(
+    await reserve(customer.client, shopB, [
+      { medicine_id: napa, quantity: 1, expected_unit_price: 12 },
+      { medicine_id: seclo, quantity: 1, expected_unit_price: 7 },
+    ]),
+    "short basket",
   );
+  assert.equal(shortBasket.status, "unavailable");
+  assert.equal(shortBasket.reason, "short");
+  assert.equal(shortBasket.medicineId, seclo);
   assert.equal((await selectStock(shopB, napa)).held_quantity, beforeShort);
   pass(
     "expired stock cannot be found, held or sold; a short basket holds nothing",
@@ -821,10 +975,12 @@ try {
         `active hold ${n}`,
       ),
     );
-  assert.ok(
-    (
-      await reserve(customer.client, shopB, item(napa, 1, 12))
-    ).error?.message.includes("at most 3"),
+  assert.equal(
+    expectNoError(
+      await reserve(customer.client, shopB, item(napa, 1, 12)),
+      "fourth hold",
+    ).status,
+    "limit",
   );
   for (const hold of active)
     expectNoError(

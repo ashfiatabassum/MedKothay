@@ -3,6 +3,7 @@
 // Reserve the basket. Sign-in is asked for only here (CLAUDE.md "Customer").
 // Pharmacy and admin accounts cannot reserve (D5). The payload from the browser
 // is untrusted: it is re-validated here and prices are taken from the server.
+import { revalidatePath } from "next/cache";
 import { getCurrentUser } from "@/lib/data/session";
 import { reserveBasket } from "@/lib/data/customer";
 import { MAX_BASKET_ITEMS, MAX_UNITS_PER_ITEM } from "@/lib/constants";
@@ -19,8 +20,7 @@ function parseItems(raw) {
     // The price the customer saw (D13); only compared, never used as the price.
     const expectedPrice = Number(i?.expectedPrice);
     if (
-      !medicineId ||
-      medicineId.length > 64 ||
+      !isUuid(medicineId) ||
       seen.has(medicineId) ||
       !Number.isInteger(quantity) ||
       quantity < 1 ||
@@ -50,7 +50,7 @@ export async function reserveAction(payload) {
   const pharmacyId =
     typeof payload?.pharmacyId === "string" ? payload.pharmacyId : "";
   const items = parseItems(payload?.items);
-  if (!pharmacyId || !items) {
+  if (!isUuid(pharmacyId) || !items) {
     return {
       status: "error",
       message:
@@ -67,12 +67,8 @@ export async function reserveAction(payload) {
     };
   }
 
-  const result = await reserveBasket({
-    customerId: user.id,
-    pharmacyId,
-    items,
-    requestId,
-  });
+  const result = await reserveBasket({ pharmacyId, items, requestId });
+  if (result.ok) revalidatePath("/reservations");
   if (!result.ok) {
     if (result.code === "price_changed")
       return {
