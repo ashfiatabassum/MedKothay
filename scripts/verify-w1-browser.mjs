@@ -37,7 +37,8 @@ const medName = `W1 Test ${run}`;
 const licence = `W1-${run}`;
 let adminId, ownerId, shopId, medicineId;
 let browser;
-const base = "http://localhost:3102";
+// APP_URL runs the same checks against the live site.
+const base = process.env.APP_URL || "http://localhost:3102";
 const pass = (label) => console.log(`PASS ${label}`);
 async function context(width) {
   const c = await browser.newContext({ viewport: { width, height: 900 } });

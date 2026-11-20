@@ -36,7 +36,8 @@ const client = () =>
 
 const run = crypto.randomBytes(5).toString("hex");
 const password = `W1D-demo-${run}!`;
-const base = "http://localhost:3102";
+// APP_URL runs the same checks against the live site.
+const base = process.env.APP_URL || "http://localhost:3102";
 const reason = `W1D check ${run}: the licence photo is blurry, upload a clearer one.`;
 const users = [];
 const shops = [];
