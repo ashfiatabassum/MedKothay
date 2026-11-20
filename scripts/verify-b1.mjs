@@ -599,6 +599,15 @@ try {
     ((s) => [s.quantity, s.held_quantity])(await selectStock(shopA, napa)),
     [3, 0],
   );
+  // Review fix: replaying the request id of a finished reservation does not
+  // report a fresh success, and creates nothing (D14).
+  const replay = expectNoError(
+    await reserve(customer.client, shopA, item(napa, 1, 12), requestId),
+    "replay after collection",
+  );
+  assert.equal(replay.status, "ended");
+  assert.equal(replay.reservationId, booked.reservationId);
+  assert.equal((await selectStock(shopA, napa)).held_quantity, 0);
   pass("pickup collects whole reservation and reduces physical and held stock");
 
   await stock(shopA, napa, 3);
@@ -701,6 +710,61 @@ try {
   );
   pass(
     "pickup code is 6 random digits, hidden from table reads, and locks after 5 wrong tries",
+  );
+
+  // Review fixes: a stale edit form cannot undo a sale; add is insert-only;
+  // quantity never below held; a referenced licence photo cannot be replaced.
+  await stock(shopA, napa, 2);
+  const save = async (expected, quantity) =>
+    expectNoError(
+      await ownerA.client.rpc("save_stock", {
+        p_medicine_id: napa,
+        p_expected_quantity: expected,
+        p_quantity: quantity,
+        p_selling_price: 12,
+        p_expiry_date: "2027-12-31",
+      }),
+      "save_stock",
+    );
+  assert.equal((await save(null, 9)).status, "exists");
+  assert.deepEqual(await save(7, 9), { status: "changed", quantity: 2 });
+  assert.equal((await selectStock(shopA, napa)).quantity, 2);
+  assert.equal((await save(2, 5)).status, "saved");
+  assert.equal((await selectStock(shopA, napa)).quantity, 5);
+  const heldForEdit = expectNoError(
+    await reserve(customer2.client, shopA, item(napa, 2, 12)),
+    "hold before edit",
+  );
+  assert.equal(heldForEdit.status, "reserved");
+  assert.deepEqual(await save(5, 1), { status: "below_held", held: 2 });
+  expectNoError(
+    await customer2.client.rpc("cancel_reservation", {
+      p_reservation_id: heldForEdit.reservationId,
+    }),
+    "release edit hold",
+  );
+  assert.ok(
+    (
+      await ownerA.client.storage
+        .from("licences")
+        .update(imageA, png, { contentType: "image/png", upsert: true })
+    ).error,
+    "referenced licence photo must not be overwritten",
+  );
+  assert.ok(
+    (
+      await ownerA.client.storage
+        .from("licences")
+        .move(imageA, `${ownerA.id}/b1-${runId}-moved.png`)
+    ).error,
+    "referenced licence photo must not be moved",
+  );
+  assert.equal(
+    (await service.storage.from("licences").download(imageA)).error,
+    null,
+  );
+  pass(
+    "stale stock edits are refused, add is insert-only, and referenced licence photos are immutable",
   );
 
   await stock(shopA, napa, 1);

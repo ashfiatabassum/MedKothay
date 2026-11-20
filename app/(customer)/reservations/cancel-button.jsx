@@ -64,10 +64,6 @@ export function CancellableReservation({ reservation, headingLevel }) {
         className="text-sm text-muted-foreground focus:outline-none"
       >
         Reservation cancelled. The pharmacy can sell these medicines again.
-        <span className="block text-xs">
-          Demo: cancelling is saved from step W3, so after a refresh this card
-          shows as active again.
-        </span>
       </p>
     );
   } else if (!confirming) {

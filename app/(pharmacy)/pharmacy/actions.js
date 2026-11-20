@@ -214,13 +214,23 @@ export async function updateStockAction(_prev, fd) {
   if (!expiryDate)
     e.expiryDate = "Enter a real expiry date (from 2000 up to 10 years ahead).";
   if (Object.keys(e).length) return { status: "error", fieldErrors: e, values };
+  // The quantity the form showed; a changed shelf refuses the save.
+  const expectedQuantity = intIn(fd.get("expectedQuantity"), 0, 100_000);
+  if (expectedQuantity === null)
+    return {
+      status: "error",
+      formError: "Refresh the page and edit again.",
+      values,
+    };
   const r = await updateStock({
-    pharmacyId: own.pharmacy.id,
     medicineId,
+    expectedQuantity,
     quantity,
     sellingPrice,
     expiryDate,
   });
+  // A stale form: refresh so the row shows the current quantity.
+  if (r.stale) refreshStockPages();
   if (!r.ok)
     return r.field
       ? { status: "error", fieldErrors: { [r.field]: r.error }, values }
@@ -282,10 +292,9 @@ export async function collectAction(_prev, fd) {
       code,
     };
   const r = await collectReservation({ reservationId, code });
-  if (r.ok) {
-    refreshStockPages();
-    revalidatePath("/pharmacy/reservations");
-  }
+  if (r.ok) refreshStockPages();
+  // Collected or just locked: the list must show the new state.
+  if (r.ok || r.locked) revalidatePath("/pharmacy/reservations");
   return r.ok
     ? { status: "collected" }
     : { status: "error", message: r.error, code };

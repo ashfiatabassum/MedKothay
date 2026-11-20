@@ -197,7 +197,7 @@ try {
     owner,
   );
   await owner.getByText(medName).first().waitFor();
-  pass("step 3: pharmacist adds stock through set_stock and sees it listed");
+  pass("step 3: pharmacist adds stock through save_stock and sees it listed");
 
   // Step 4: customer searches and sees the shop with a band, not a number.
   await signIn(cust, customer.email);

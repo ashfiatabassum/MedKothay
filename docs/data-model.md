@@ -58,7 +58,7 @@ Agreed in chat instead of a `grill-me` session (no time that day). Claude propos
 
 ## As built (B1)
 
-All 13 migrations are applied to the linked Supabase project (13 on 19 Nov via `db push --remote`; advisors: only "leaked password protection disabled"):
+All 14 migrations are applied to the linked Supabase project (13 on 19 Nov, 14 on 20 Nov, via `db push --remote`; advisors: only "leaked password protection disabled"):
 
 1. `restrict_rls_auto_enable_execute` keeps the existing RLS event trigger active while revoking its helper from public callers.
 2. `core_schema` creates the eight intended tables (`profiles`, `pharmacies`, `medicines`, `pharmacy_stock`, `reservations`, `reservation_items`, `sales`, `sale_items`) with UUID keys, foreign keys, checks, lookup indexes, unique stock/medicine identities and RLS. The Auth trigger accepts only the whitelisted account type, name and phone and ignores forged role/shop metadata.
@@ -78,6 +78,12 @@ All 13 migrations are applied to the linked Supabase project (13 on 19 Nov via `
     - New `collect_pickup(reservation_id, code)` returns `collected`, `no_match` (wrong code, or a reservation that is not this shop's), `not_active`, `locked` (5 wrong codes) or `expired_item`. It returns instead of raising, so the attempt counter is kept. `collect_reservation` is revoked from `authenticated` (not dropped).
     - New `get_shop_reservations()` for the pharmacist: own shop, newest 100, customer `full_name`, items and a `locked` flag; never the pickup code. Releases lapsed holds first (D10).
     - Direct `select` on `reservations` is limited to `id, pharmacy_id, customer_id, status, cancellation_reason, expires_at, created_at`, so `pickup_code`, `client_request_id` and `failed_code_attempts` are readable only through the functions.
+14. `review_fixes_stock_edit_replay_licence_update` (W1–W3 reviews, applied 20 Nov):
+    - `licences_owner_update` (storage) gains the same "not referenced by `pharmacies.licence_photo_url`" check as delete, so an approved licence photo cannot be overwritten or moved (`ALTER POLICY`, nothing dropped).
+    - New `save_stock(medicine_id, expected_quantity, quantity, price, expiry)` is used by the app instead of `set_stock`. `expected_quantity` null = add (returns `exists` if stocked); otherwise returns `changed` with the current quantity when the shelf moved since the form was read, `below_held` with the held count, `not_stocked`, or `saved`. Prevents a stale edit form from undoing a sale or pickup. `set_stock` stays for tests.
+    - `reserve` replaying a request id whose reservation is no longer active returns `ended` instead of `reserved`.
+
+Accepted review notes (no change): pharmacists see customer names on past reservations too (shop order history); search runs `expire_shop` for every approved shop (D10 by design); a locked reservation is never unlocked (customer cancels or the hold ends); no per-owner upload count limit; the far-shop fallback lists only in-stock matches (D16 wording "that have the medicine in stock").
 
 The seed contains 100 medicine rows derived from the pinned MIT-licensed MedEx dataset commit `2b5c93b0ef4ed27cb10f23e1892996eb2e12bd51`, eight fictional Dhaka pharmacies (seven approved, one pending), 526 varied stock rows, expired stock coverage and a clearly invalid generated demo licence image in private storage. Hosted Auth email confirmation is off, matching D5.
 

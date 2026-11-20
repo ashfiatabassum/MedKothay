@@ -180,6 +180,9 @@ function InventoryRow({ row }) {
           className="space-y-3 border-t pt-3"
         >
           <input type="hidden" name="medicineId" value={row.medicineId} />
+          {/* The quantity on screen; the database refuses the save if a sale
+              or pickup changed it meanwhile (review: lost update). */}
+          <input type="hidden" name="expectedQuantity" value={row.quantity} />
           {state.formError && (
             <p role="alert" className="text-sm text-destructive">
               {state.formError}

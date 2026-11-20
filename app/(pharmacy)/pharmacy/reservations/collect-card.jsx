@@ -99,6 +99,12 @@ export function CollectCard({ reservation: r }) {
           <CircleCheck className="size-4" aria-hidden="true" />
           Collected. Stock is reduced for every item.
         </p>
+      ) : status === "active" && r.locked ? (
+        <p role="status" className="border-t pt-3 text-sm text-destructive">
+          Locked after 5 wrong pickup codes, so it can&apos;t be collected. The
+          customer can cancel it and reserve again; otherwise the hold ends by
+          itself.
+        </p>
       ) : status === "active" ? (
         <form
           ref={formRef}

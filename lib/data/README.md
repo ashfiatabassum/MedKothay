@@ -8,7 +8,7 @@ The only place screens get data from. Every function is server-only and returns 
 | `pharmacy.js` | dashboard, inventory, counter, incoming reservations | U3                                    | W2, W3               |
 | `admin.js`    | pending pharmacies, catalog                          | U4                                    | W1                   |
 
-Until W1–W3, functions read `lib/mock-data.js` and mark the line to replace with `TODO(W<n>)`. Keep the return shapes when wiring; if a real function cannot return the same shape, change the screen and this note together.
+Since W1–W3 every function calls Supabase under the caller's session (RLS) and changes stock only through Postgres functions; nothing reads `lib/mock-data.js` (removed in F). The return shapes are the ones the U1–R1 screens were built on; if a real function cannot return the same shape, change the screen and this note together.
 
 Customer functions return stock **bands** (`"in" | "low" | "out"`), never quantities.
 
@@ -20,4 +20,4 @@ R1 contracts to preserve when wiring:
 - Own-pharmacy DTOs include latitude, longitude and `locationSource` so correcting a registration preserves its pin. Incoming reservation items include `form` for quantity units.
 - Admin rows use `submittedAt` from the latest submission, `reviewedAt`, `reviewedBy` display name, prior rejection reason, location source and duplicate-licence warnings. Catalog rows include `stockCount` for the shared-edit confirmation.
 
-Run `npm run verify:r1` for isolated sample-data/action contract checks. This does not replace browser, RLS or transaction tests.
+Live checks against the hosted project: `npm run verify:b1` (database), `verify:w1:browser`, `verify:w1:decisions` and `verify:w23:browser` (browser, against `next start -p 3102`). `npm run verify:r1` still checks the old sample-data contracts only.

@@ -54,9 +54,6 @@ function Confirmation({ reservation, basketCleared, onViewBasket }) {
             ? "The 30-minute hold ended, so the pharmacy can sell these medicines again."
             : `The pharmacy holds these medicines for ${HOLD_MINUTES} minutes. Show the code at the counter and pay there. ${basketCleared ? "Your basket has been cleared." : "Your newer basket has been kept."}`}
         </p>
-        <p className="rounded-md bg-muted px-3 py-2 text-xs text-muted-foreground">
-          Demo: reservations are saved from step W3. This one is not saved yet.
-        </p>
       </div>
       <ReservationCard
         reservation={
