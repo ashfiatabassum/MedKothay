@@ -59,7 +59,7 @@ Not clicked in a browser (covered in the database by verify-b1 only): the D16 fa
 
 ### Pull requests (W1–W3)
 
-Opened 20 Nov as a stack; numbers recorded below once created. Merge order W1 → W2 → W3, then the live check.
+Opened 20 Nov as a stack: **#9** W1 → `main`, **#10** W2 → W1 branch, **#11** W3 → W2 branch. Merge order #9 → #10 → #11 (GitHub retargets the next PR to `main` when a merged branch is deleted), then the live check. Merge commits are recorded here after merging.
 
 ## B1 implementation complete — 19 November 2026 (Codex)
 
