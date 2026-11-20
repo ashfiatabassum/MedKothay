@@ -1,7 +1,7 @@
 # Project status and next handoff
 
-**Updated:** 19 November 2026
-**Phase:** M0 and the original UI phase are complete and live. **R1 is complete on sample data. B1 is implemented and integration-tested** on `feature/b1-schema`: schema, RLS, transactional functions, private licence storage and realistic seed are applied to Supabase; 18 live role/workflow/concurrency groups, advisors, lint and build pass. The developer explicitly waived the unavailable three-subagent review gate on 19 November to keep the deadline moving. The UI still uses sample data until W1–W3.
+**Updated:** 20 November 2026
+**Phase:** M0, U1–U4, R1 and B1 are merged and live. **W1–W3 (wiring to Supabase) are implemented, reviewed and verified locally** on three stacked branches (`feature/w1-wire-auth-admin` → `feature/w2-wire-inventory-sale` → `feature/w3-wire-search-reservations`), with pull requests open. All 14 migrations are applied to the hosted database. The live site still runs the sample-data UI from `main` until the three PRs merge; the plan's "done when" checks on the **live** site are not done yet.
 
 - Live: https://med-kothay.vercel.app (auto-deploys from `main`)
 - Repo: https://github.com/ashfiatabassum/MedKothay (public)
@@ -15,10 +15,9 @@
 - Env var names follow the current Supabase dashboard: `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY` (the anon/publishable key) and `SUPABASE_SECRET_KEY` (server only).
 - Build order (18 Nov): **UI first on sample data (U1–U4), then backend (B1), then wiring (W1–W3)**, at the developer's request. Accepted cost: about half a day of wiring work, and the stock logic is built later. Mitigation: `lib/data/` functions return data in the same shape the Postgres functions will.
 - Accounts (18 Nov, D5): email + password; one email = one account = one type (customer or pharmacy); pharmacy accounts cannot reserve; neutral auth messages; email confirmation off; no password reset for now. Header shows only logo + Sign in when signed out.
-- Demo session (U2/U3, until W1): signing in with a sample account sets an httpOnly cookie holding only that account's **key** (customer, pharmacist, pharmacist_new, pharmacist_pending, pharmacist_rejected, admin), never an id or role from the browser. Sample data only; removed in W1.
-- Sample pending shops for the admin: Green Life Pharmacy (owner `pending@`) and Rahman Drug House (no owner; licence expires 2026-12-10, so it shows "expires within 30 days" until then and "expired" after).
-- Demo accounts (password `demo-password`, all `@medkothay.test`): `customer`, `pharmacy` (approved Lazz Pharma), `newpharmacy` (no shop yet: step 2), `pending` (Green Life, pending), `rejected` (MediCare Point, rejected with a reason), `admin`.
-- R1 adds `suspended@medkothay.test` (Gulshan Community Pharmacy; owner correction flow) and `expired@medkothay.test` (Banani Care; approved shop with an expired licence). The customer has a cancelled sample reservation marked "pharmacy unavailable". These are fixed sample states, not persisted admin decisions.
+- Sample-era sign-in (U2–R1): a demo cookie and fixed `@medkothay.test` sample accounts with password `demo-password`. **Removed in W1** (`mockAccounts`/`mockSession` deleted); on the W1–W3 branches these accounts do not exist. Sign-in is Supabase Auth only.
+- Demo admin (20 Nov): `admin@medkothay.test`, signed up as a customer through the normal endpoint and promoted once with SQL (CLAUDE.md "admin is set once by hand"). Its password is only in the developer's `.env.local` (`DEMO_ADMIN_PASSWORD`), never in the repo. The seeded shops have no owner accounts; the demo loop registers a new shop.
+- Emails (20 Nov, developer): Gmail credentials stay in `.env.local` only, not in Vercel, so the live site sends no email (logged "not configured"; D6 is best effort). Local test runs keep email off.
 - Pharmacy registration (D6, 18 Nov): shop name, address, area, map location, shop phone, DGDA licence number, licence photo (≤ 5 MB, checked by content; server action body limit 6 MB), licence expiry; status banner on the dashboard; two emails from W1 (developer will set up a Gmail app password).
 - Theme (18 Nov): white and deep blue `#0B5CAD`, blue-white background, amber accent for pickup code and countdown (`CLAUDE.md` "Theme").
 - Admin workflow review (19 Nov), accepted: D17 no approval of an expired licence; D18 `suspended` status (leaves search, active reservations cancelled, owner can resubmit); D19 duplicate licence warning; D20 catalog edit warning, no delete; D21 review metadata (submitted/reviewed at/by, previous reason, location source); plus wording and small UI (in R1).
@@ -39,21 +38,28 @@
 | U4 admin screens                         |   Yes   |     Yes     |   Yes    | Merged PR #5 (`05a1b67`); Playwright 4 runs; review-react-ui, vercel-react-best-practices; code, security and requirements reviewers. Decisions and catalog changes are **not saved** until W1                                                                                                    |
 | R1 workflow review changes               |   Yes   |     Yes     |   Yes    | Code, requirements and security reviews completed; 13 contract groups and 48 direct Playwright/Chrome journey groups at 375/1280 passed, plus lint/build. Final screenshots and results in `docs/verification.md`. Merged PR #7 (`2c87183`); production smoke checks passed. Sample-only behavior |
 | B1 schema, RLS, functions, seed          |   Yes   |     Yes     |   Yes    | Nine migrations, private Storage and seed applied; 18 live integration groups, advisors, lint and build pass. The developer explicitly waived the unavailable three-agent review gate on 19 November to meet the deadline                                                                         |
-| W1 wire auth, registration, admin        |   Yes   |     No      |    No    |                                                                                                                                                                                                                                                                                                   |
-| W2 wire inventory, counter sale          |   Yes   |     No      |    No    |                                                                                                                                                                                                                                                                                                   |
-| W3 wire search, reservations, collection |   Yes   |     No      |    No    |                                                                                                                                                                                                                                                                                                   |
+| W1 wire auth, registration, admin        |   Yes   |     Yes     | Locally  | Supabase Auth, registration with private licence upload, admin decisions and catalog, best-effort email. Browser: W1 7/7 and W1 decisions 7/7 on a local production build. Live site and real email not verified. PR open (stack 1 of 3)                                                          |
+| W2 wire inventory, counter sale          |   Yes   |     Yes     | Locally  | `save_stock` (refuses stale forms) and `complete_sale`; dashboard from real data. Browser: W2/W3 8/8 locally. Live site not verified. PR open (stack 2 of 3)                                                                                                                                      |
+| W3 wire search, reservations, collection |   Yes   |     Yes     | Locally  | Real search/reserve/cancel/collect; pgcrypto pickup code with 5-wrong-code lockout. DB: verify-b1 20/20. Code, security and requirements reviews done and fixed (`docs/verification.md`). Live site not verified. PR open (stack 3 of 3)                                                          |
 | F demo loop and hand-in                  |   Yes   |     No      |    No    |                                                                                                                                                                                                                                                                                                   |
 
-## W1 working branch
+## W1–W3 stack
 
-`feature/w1-wire-auth-admin` has started. Supabase Auth replaces the demo session in the auth data layer, and pharmacy registration now attempts private Storage upload followed by the B1 registration/resubmission RPC. Lint and build pass. This is a checkpoint, not a completed or deployed W1 slice: live Auth journeys, orphan-upload cleanup, revalidation, real admin/catalog wiring, emails and browser acceptance remain. The B1 seed has fictional shops but no permanent Auth admin account, so the W1 admin demo needs explicit provisioning before acceptance.
+The three branches are stacked because W2 and W3 need W1's real sign-in (a deviation from "branch from main", accepted to start W2/W3 before W1 was tested). Merge order: **W1 → W2 → W3**. When a PR merges and its branch is deleted, GitHub retargets the next PR to `main`. Merging W1 alone deploys real sign-in while inventory and reservations still show sample data, so merge all three in one sitting. The review fixes (`7010ecf`) live on the W3 branch, including fixes to W1/W2 code.
+
+How to test (needs `SUPABASE_SECRET_KEY` and `DEMO_ADMIN_*` in `.env.local`; server: `npm run build` then `GMAIL_USER= GMAIL_APP_PASSWORD= npx next start -p 3102`):
+
+- `B1_TEST_REMOTE=gkzqlpaknytdvbbknaxp npm run verify:b1`
+- `W1_TEST_REMOTE=… B1_SERVICE_KEY=… npm run verify:w1:browser`, `W1D_TEST_REMOTE=… npm run verify:w1:decisions`, `W23_TEST_REMOTE=… npm run verify:w23:browser`
+
+Each creates uniquely prefixed fixtures on the hosted project and deletes them; a read-only leftover query found none after every run.
 
 ## Next task
 
-Start **W1** after B1 merges: wire real Supabase Auth, pharmacy registration, admin approval/rejection and catalog data. R1 is merged and live; the current production UI still intentionally uses sample data.
+1. Merge the three PRs in order; check the Vercel deploy.
+2. Run the demo loop on the live site (the W1–W3 "done when" checks) and record it.
+3. F: delete `lib/mock-data.js`, `/dev/components`, `scripts/verify-r1*.mjs` and the `verify:r1*` scripts; README; final reviews.
 
-`npm run verify:r1` stubs only Next session/redirect plumbing and React request caching, loads the real data/action modules and uses isolated sample fixtures with a fixed Dhaka date. It does not verify browser behavior, real transactions, database idempotency or RLS. Database persistence remains intentionally deferred.
-
-B1's checklist already includes D7–D21. Keep `reservations.cancellation_reason` so the generic suspension explanation survives later shop resubmission. Direct browser checks exercise the real Next server and client interactions but cannot prove database idempotency, RLS or atomic stock changes.
+Optional Supabase dashboard settings (not changed): Auth minimum password length is 6 (the app enforces 8); leaked password protection is off (the only advisor warning).
 
 Order: U1 → U2 → U3 → U4 → R1 → B1 (backend) → W1–W3 (wire up) → F. Decisions D1–D21 are recorded in `docs/data-model.md`.

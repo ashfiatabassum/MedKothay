@@ -118,32 +118,32 @@ Decisions D1–D4 are confirmed in `docs/data-model.md` (role choice at sign-up;
 
 ## W1: Wire auth, registration and admin
 
-- [ ] Email + password sign-in, sign-up (with account type, name, phone) and sign-out via Supabase Auth; email confirmation turned off in the dashboard; role-based redirects (customer → search, pharmacy → dashboard, admin → admin); same-site `next` redirects only
-- [ ] Account menu with "Sign out" in every area header (code review, U1b); on customer pages a signed-in pharmacist or admin sees a link back to their own area
-- [ ] Auth hardening (security review, U1b): map every Supabase sign-in/sign-up error to the neutral messages (never show raw Supabase text); confirm Supabase Auth rate limits; any `?next=` return path must be a same-origin path (starts with `/`, not `//`, no ``, no scheme); every protected page and action checks `getClaims`/role on the server, not only in `proxy.js`; remove `mockAccounts` and the mock auth path
-- [ ] Registration form saves through `register_pharmacy` and uploads the licence photo
-- [ ] Admin pending list, licence photo, approve and reject on real data; catalog on real data
-- [ ] Admin hardening (security review U4): validate ids as UUIDs before calling Supabase (generic error, no raw Postgres text); licence photo shown via a short-lived signed URL from an admin-only storage policy; escape the rejection reason in the HTML email
-- [ ] Emails (D6): "registration received" and the approve/reject result via Gmail app password (developer sets `GMAIL_USER`/`GMAIL_APP_PASSWORD` in `.env.local` and Vercel as Secret); best effort
+- [x] Email + password sign-in, sign-up (with account type, name, phone) and sign-out via Supabase Auth; email confirmation turned off in the dashboard; role-based redirects (customer → search, pharmacy → dashboard, admin → admin); same-site `next` redirects only — _observed locally 20 Nov (W1 browser, W1 decisions); confirmation off confirmed via `config diff` and an auto-confirmed account_
+- [ ] Account menu with "Sign out" in every area header (code review, U1b); on customer pages a signed-in pharmacist or admin sees a link back to their own area — _Sign out observed in the pharmacy area; the link back is in `components/account-controls.jsx` but was not browser-checked_
+- [x] Auth hardening (security review, U1b): map every Supabase sign-in/sign-up error to the neutral messages (never show raw Supabase text); confirm Supabase Auth rate limits; any `?next=` return path must be a same-origin path (starts with `/`, not `//`, no ``, no scheme); every protected page and action checks `getClaims`/role on the server, not only in `proxy.js`; remove `mockAccounts` and the mock auth path — _neutral messages observed; rate limits 30 sign-ins/sign-ups per 5 min per IP (`config diff`); `mockAccounts` removed; security review 20 Nov clean_
+- [x] Registration form saves through `register_pharmacy` and uploads the licence photo — _observed, plus reject → resubmit of the same shop_
+- [x] Admin pending list, licence photo, approve and reject on real data; catalog on real data — _observed, plus suspend_
+- [x] Admin hardening (security review U4): validate ids as UUIDs before calling Supabase (generic error, no raw Postgres text); licence photo shown via a short-lived signed URL from an admin-only storage policy; escape the rejection reason in the HTML email — _the email is plain text, so there is no HTML to escape; signed URL lasts 300 s_
+- [ ] Emails (D6): "registration received" and the approve/reject result via Gmail app password (developer sets `GMAIL_USER`/`GMAIL_APP_PASSWORD` in `.env.local` and Vercel as Secret); best effort — _code done (plain text, 5 s timeouts); the developer keeps the credentials local only (20 Nov), so no live email; no real send recorded yet_
 
-**Done when:** demo loop steps 1–2 pass on the live site (register → pending → admin approves).
+**Done when:** demo loop steps 1–2 pass on the live site (register → pending → admin approves). — _Met on a local production build against the hosted DB (20 Nov); **live site not yet verified** (PR open)._
 
 ## W2: Wire inventory and counter sale
 
-- [ ] Inventory add, edit and adjust on real data
-- [ ] Counter sale through `complete_sale`; blocked-by-holds message from the real function
-- [ ] Dashboard numbers from real data
+- [x] Inventory add, edit and adjust on real data — _add observed in the browser; edits go through `save_stock`, which refuses stale forms and quantities below held (verify-b1)_
+- [x] Counter sale through `complete_sale`; blocked-by-holds message from the real function — _observed: "1 unit is reserved for pickup"_
+- [x] Dashboard numbers from real data — _today's sale observed_
 
-**Done when:** demo loop step 3 passes; a sale beyond available stock is refused with the reserved count.
+**Done when:** demo loop step 3 passes; a sale beyond available stock is refused with the reserved count. — _Met locally (20 Nov); live site not yet verified._
 
 ## W3: Wire search, reservations and collection
 
-- [ ] Search through `search_medicine` with real distances
-- [ ] Reserve, cancel and my reservations through the real functions
-- [ ] Pharmacy incoming reservations and collect with the pickup code
-- [ ] Pickup code (security review U3): generated in the database with pgcrypto `gen_random_bytes`; checked inside `collect_reservation`; lock the reservation (or require a new code) after ~5 wrong attempts; same generic error for wrong code and wrong reservation
+- [x] Search through `search_medicine` with real distances — _observed at 375 px; the fallback of 3 shops outside 5 km is verified in the database (verify-b1), not clicked in the browser_
+- [x] Reserve, cancel and my reservations through the real functions — _reserve and My reservations observed; customer cancel verified through the RPC (verify-b1), not clicked in the browser_
+- [x] Pharmacy incoming reservations and collect with the pickup code — _observed, including a wrong code refused and stock 3 → 2_
+- [x] Pickup code (security review U3): generated in the database with pgcrypto `gen_random_bytes`; checked inside `collect_reservation`; lock the reservation (or require a new code) after ~5 wrong attempts; same generic error for wrong code and wrong reservation — _implemented as `collect_pickup` (the old function is revoked); locks after 5; `no_match` for both; the code is hidden from table reads_
 
-**Done when:** demo loop steps 4–7 pass on the live site, as a customer, a pharmacist of the shop, and a pharmacist of another shop (who sees nothing).
+**Done when:** demo loop steps 4–7 pass on the live site, as a customer, a pharmacist of the shop, and a pharmacist of another shop (who sees nothing). — _Met locally for all three roles (20 Nov); live site not yet verified._
 
 ## F: Demo loop and hand-in
 
