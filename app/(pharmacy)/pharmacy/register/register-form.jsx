@@ -66,10 +66,6 @@ export function RegisterForm({ resubmit, initial = {}, rejectionReason }) {
           your dashboard. Until then your shop is hidden from customers, but you
           can already add your stock.
         </p>
-        <p className="rounded-md bg-muted px-3 py-2 text-xs text-muted-foreground">
-          Demo: registrations are saved and emails sent from step W1. Nothing
-          was saved yet.
-        </p>
       </div>
     );
   }

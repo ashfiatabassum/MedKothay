@@ -5,7 +5,7 @@
 // "customer" or "pharmacy"; the database maps it to a role in W1.
 import { redirect } from "next/navigation";
 import { signInWithPassword, signUp } from "@/lib/data/auth";
-import { endDemoSession, safeNextPath } from "@/lib/data/session";
+import { signOut, safeNextPath } from "@/lib/data/session";
 import {
   checkEmail,
   checkFullName,
@@ -71,7 +71,7 @@ export async function signUpAction(_prev, formData) {
     fullName,
     email,
     password,
-    phone: phone.value,
+    phone: phone.value.slice(3),
   });
   if (!result.ok) {
     return {
@@ -88,6 +88,6 @@ export async function signUpAction(_prev, formData) {
 }
 
 export async function signOutAction() {
-  await endDemoSession();
+  await signOut();
   redirect("/");
 }

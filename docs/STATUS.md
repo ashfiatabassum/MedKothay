@@ -44,6 +44,10 @@
 | W3 wire search, reservations, collection |   Yes   |     No      |    No    |                                                                                                                                                                                                                                                                                                   |
 | F demo loop and hand-in                  |   Yes   |     No      |    No    |                                                                                                                                                                                                                                                                                                   |
 
+## W1 working branch
+
+`feature/w1-wire-auth-admin` has started. Supabase Auth replaces the demo session in the auth data layer, and pharmacy registration now attempts private Storage upload followed by the B1 registration/resubmission RPC. Lint and build pass. This is a checkpoint, not a completed or deployed W1 slice: live Auth journeys, orphan-upload cleanup, revalidation, real admin/catalog wiring, emails and browser acceptance remain. The B1 seed has fictional shops but no permanent Auth admin account, so the W1 admin demo needs explicit provisioning before acceptance.
+
 ## Next task
 
 Start **W1** after B1 merges: wire real Supabase Auth, pharmacy registration, admin approval/rejection and catalog data. R1 is merged and live; the current production UI still intentionally uses sample data.

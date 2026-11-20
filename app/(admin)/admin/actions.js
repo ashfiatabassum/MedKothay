@@ -3,6 +3,7 @@
 // Admin server actions. Each re-checks the admin role: layouts do not run again
 // when a form posts to an action. All input is validated here.
 import { getCurrentUser } from "@/lib/data/session";
+import { revalidatePath } from "next/cache";
 import {
   FORMS,
   addMedicine,
@@ -11,6 +12,7 @@ import {
   rejectPharmacy,
   suspendPharmacy,
   updateMedicine,
+  validId,
 } from "@/lib/data/admin";
 
 // Trimmed, with runs of spaces collapsed to one.
@@ -30,13 +32,20 @@ async function isAdmin() {
 export async function approveAction(_prev, fd) {
   if (!(await isAdmin())) return { status: "error", message: NOT_ADMIN };
   const id = text(fd, "pharmacyId").slice(0, 64);
+  if (!validId(id)) return { status: "error", message: "Pharmacy not found." };
   const r = await approvePharmacy(id);
+  if (r.ok) {
+    revalidatePath("/admin");
+    revalidatePath(`/admin/pharmacies/${id}`);
+    revalidatePath("/pharmacy");
+  }
   return r.ok ? { status: "approved" } : { status: "error", message: r.error };
 }
 
 export async function rejectAction(_prev, fd) {
   if (!(await isAdmin())) return { status: "error", message: NOT_ADMIN };
   const id = text(fd, "pharmacyId").slice(0, 64);
+  if (!validId(id)) return { status: "error", message: "Pharmacy not found." };
   const reason = text(fd, "reason");
   if (reason.length < 10 || reason.length > 300) {
     return {
@@ -49,6 +58,11 @@ export async function rejectAction(_prev, fd) {
     };
   }
   const r = await rejectPharmacy(id, reason);
+  if (r.ok) {
+    revalidatePath("/admin");
+    revalidatePath(`/admin/pharmacies/${id}`);
+    revalidatePath("/pharmacy");
+  }
   return r.ok
     ? { status: "rejected" }
     : { status: "error", message: r.error, values: { reason } };
@@ -58,6 +72,7 @@ export async function rejectAction(_prev, fd) {
 export async function suspendAction(_prev, fd) {
   if (!(await isAdmin())) return { status: "error", message: NOT_ADMIN };
   const id = text(fd, "pharmacyId").slice(0, 64);
+  if (!validId(id)) return { status: "error", message: "Pharmacy not found." };
   const reason = text(fd, "reason");
   if (reason.length < 10 || reason.length > 300) {
     return {
@@ -70,6 +85,11 @@ export async function suspendAction(_prev, fd) {
     };
   }
   const r = await suspendPharmacy(id, reason);
+  if (r.ok) {
+    revalidatePath("/admin");
+    revalidatePath(`/admin/pharmacies/${id}`);
+    revalidatePath("/pharmacy");
+  }
   return r.ok
     ? { status: "suspended" }
     : { status: "error", message: r.error, values: { reason } };
@@ -106,6 +126,7 @@ export async function addMedicineAction(_prev, fd) {
   if (Object.keys(e).length)
     return { status: "error", fieldErrors: e, values: v };
   const r = await addMedicine(v);
+  if (r.ok) revalidatePath("/admin/catalog");
   return r.ok
     ? { status: "saved", name: `${v.brandName} ${v.strength}` }
     : { status: "error", formError: r.error, values: v };
@@ -114,6 +135,8 @@ export async function addMedicineAction(_prev, fd) {
 export async function updateMedicineAction(_prev, fd) {
   if (!(await isAdmin())) return { status: "error", formError: NOT_ADMIN };
   const id = text(fd, "medicineId").slice(0, 64);
+  if (!validId(id))
+    return { status: "error", formError: "Medicine not found." };
   const { v, e } = readMedicine(fd);
   if (Object.keys(e).length)
     return { status: "error", fieldErrors: e, values: v };
@@ -130,6 +153,7 @@ export async function updateMedicineAction(_prev, fd) {
     };
   }
   const r = await updateMedicine(id, v);
+  if (r.ok) revalidatePath("/admin/catalog");
   return r.ok
     ? { status: "saved", values: v }
     : { status: "error", formError: r.error, values: v };
