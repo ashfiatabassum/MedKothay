@@ -126,7 +126,7 @@ Decisions D1–D4 are confirmed in `docs/data-model.md` (role choice at sign-up;
 - [x] Admin hardening (security review U4): validate ids as UUIDs before calling Supabase (generic error, no raw Postgres text); licence photo shown via a short-lived signed URL from an admin-only storage policy; escape the rejection reason in the HTML email — _the email is plain text, so there is no HTML to escape; signed URL lasts 300 s_
 - [ ] Emails (D6): "registration received" and the approve/reject result via Gmail app password (developer sets `GMAIL_USER`/`GMAIL_APP_PASSWORD` in `.env.local` and Vercel as Secret); best effort — _code done (plain text, 5 s timeouts); the developer keeps the credentials local only (20 Nov), so no live email; no real send recorded yet_
 
-**Done when:** demo loop steps 1–2 pass on the live site (register → pending → admin approves). — _Met on a local production build against the hosted DB (20 Nov); **live site not yet verified** (PR open)._
+**Done when:** demo loop steps 1–2 pass on the live site (register → pending → admin approves). — _Met on the live site 20 Nov (W1 7/7, W1 decisions 7/7 with `APP_URL`)._
 
 ## W2: Wire inventory and counter sale
 
@@ -134,7 +134,7 @@ Decisions D1–D4 are confirmed in `docs/data-model.md` (role choice at sign-up;
 - [x] Counter sale through `complete_sale`; blocked-by-holds message from the real function — _observed: "1 unit is reserved for pickup"_
 - [x] Dashboard numbers from real data — _today's sale observed_
 
-**Done when:** demo loop step 3 passes; a sale beyond available stock is refused with the reserved count. — _Met locally (20 Nov); live site not yet verified._
+**Done when:** demo loop step 3 passes; a sale beyond available stock is refused with the reserved count. — _Met on the live site 20 Nov (W2/W3 8/8)._
 
 ## W3: Wire search, reservations and collection
 
@@ -143,7 +143,7 @@ Decisions D1–D4 are confirmed in `docs/data-model.md` (role choice at sign-up;
 - [x] Pharmacy incoming reservations and collect with the pickup code — _observed, including a wrong code refused and stock 3 → 2_
 - [x] Pickup code (security review U3): generated in the database with pgcrypto `gen_random_bytes`; checked inside `collect_reservation`; lock the reservation (or require a new code) after ~5 wrong attempts; same generic error for wrong code and wrong reservation — _implemented as `collect_pickup` (the old function is revoked); locks after 5; `no_match` for both; the code is hidden from table reads_
 
-**Done when:** demo loop steps 4–7 pass on the live site, as a customer, a pharmacist of the shop, and a pharmacist of another shop (who sees nothing). — _Met locally for all three roles (20 Nov); live site not yet verified._
+**Done when:** demo loop steps 4–7 pass on the live site, as a customer, a pharmacist of the shop, and a pharmacist of another shop (who sees nothing). — _Met on the live site for all three roles 20 Nov (W2/W3 8/8)._
 
 ## F: Demo loop and hand-in
 

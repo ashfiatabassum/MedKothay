@@ -41,7 +41,8 @@ const run = crypto.randomBytes(5).toString("hex");
 const password = `W23-demo-${run}!`;
 const medName = `W23Test${run}`;
 const customerName = `W23 Customer ${run}`;
-const base = "http://localhost:3102";
+// APP_URL runs the same checks against the live site.
+const base = process.env.APP_URL || "http://localhost:3102";
 const users = [];
 const shops = [];
 let medicineId;
