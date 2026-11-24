@@ -42,7 +42,10 @@ const base = process.env.APP_URL || "http://localhost:3102";
 const users = [];
 let browser;
 const pass = (label) => console.log(`PASS ${label}`);
-const imagePath = path.join(os.tmpdir(), `s1-rx-${run}.png`);
+// RX_IMAGE: use your own (fictional) prescription image instead of the built-in
+// one. A given file is never deleted.
+const givenImage = process.env.RX_IMAGE;
+const imagePath = givenImage || path.join(os.tmpdir(), `s1-rx-${run}.png`);
 
 // A made-up prescription: fictional doctor and patient, real catalog brands.
 const RX_HTML = `<!doctype html><html><body style="margin:0;background:#fff">
@@ -91,10 +94,14 @@ try {
   browser = await chromium.launch({ channel: "chrome", headless: true });
 
   // The fictional prescription image.
-  const shot = await browser.newPage({ viewport: { width: 700, height: 520 } });
-  await shot.setContent(RX_HTML);
-  await shot.screenshot({ path: imagePath, fullPage: true });
-  await shot.close();
+  if (!givenImage) {
+    const shot = await browser.newPage({
+      viewport: { width: 700, height: 520 },
+    });
+    await shot.setContent(RX_HTML);
+    await shot.screenshot({ path: imagePath, fullPage: true });
+    await shot.close();
+  }
 
   // Signed out: asked to sign in; the home page links to the reader.
   const anonCtx = await browser.newContext({
@@ -203,9 +210,9 @@ try {
   await page.getByRole("button", { name: "Remove medicine 3" }).click();
   await page.getByRole("button", { name: "Add a medicine" }).click();
   const added = page.locator('input[id^="rx-name-"]').last();
-  await added.fill("Monas");
+  await added.fill("Alatrol");
   assert.equal(await page.locator('input[id^="rx-name-"]').count(), before);
-  await page.getByRole("link", { name: "Search for Monas" }).waitFor();
+  await page.getByRole("link", { name: "Search for Alatrol" }).waitFor();
   const first = names.find((n) => n.toLowerCase().includes("napa"));
   await page.getByRole("link", { name: `Search for ${first}` }).click();
   await page.waitForURL((u) => u.pathname === "/search");
@@ -289,7 +296,7 @@ try {
   );
 } finally {
   if (browser) await browser.close();
-  await fs.rm(imagePath, { force: true });
+  if (!givenImage) await fs.rm(imagePath, { force: true });
   // Deleting the user cascades to profiles and prescription_reads.
   for (const id of users) await service.auth.admin.deleteUser(id);
 }

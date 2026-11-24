@@ -12,6 +12,7 @@
     "verify:w1:decisions": "node scripts/verify-w1-decisions-browser.mjs",
     "verify:w23:browser": "node scripts/verify-w23-browser.mjs",
     "verify:s1:browser": "node scripts/verify-s1-browser.mjs",
+    "make:test-prescription": "node scripts/make-test-prescription.mjs",
     "verify:r1": "node --experimental-vm-modules scripts/verify-r1.mjs",
     "verify:r1:browser": "node scripts/verify-r1-browser.mjs"
   },
