@@ -1,6 +1,6 @@
 // Home: the search box lives in the blue box (no separate "Search" header link).
 import Link from "next/link";
-import { MapPin, ShoppingBasket, Store, Ticket } from "lucide-react";
+import { Camera, MapPin, ShoppingBasket, Store, Ticket } from "lucide-react";
 import { buttonVariants } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { SearchForm } from "@/components/search/search-form";
@@ -39,6 +39,13 @@ export default function Home() {
         <div className="mt-6">
           <SearchForm variant="hero" />
         </div>
+        <Link
+          href="/prescription"
+          className="mt-4 inline-flex min-h-11 items-center gap-2 text-sm font-medium underline underline-offset-4 hover:no-underline"
+        >
+          <Camera className="size-4" aria-hidden="true" />
+          Have a prescription? Search from a photo
+        </Link>
       </section>
 
       <section aria-labelledby="how-heading">

@@ -151,4 +151,17 @@ Decisions D1–D4 are confirmed in `docs/data-model.md` (role choice at sign-up;
 - [ ] The 7-step demo loop passes end to end on the deployed URL (Playwright MCP); screenshots
 - [ ] `security-reviewer` and `requirements-reviewer` on the whole app; fix or record findings
 - [ ] README: how to run, done/not done, agentic tools used and where
-- [ ] Stretch (only if all above is done): AI prescription reading with Gemini
+- [ ] Stretch (only if all above is done): AI prescription reading with Gemini — _moved before F as S1 by the developer (24 Nov)_
+
+## S1: AI prescription reading (stretch, moved before F)
+
+**Decided 24 Nov (developer):** the developer moved this ahead of F, accepting that F is still open; all of W1–W3 is live. Signed-in **customers only**, with a daily limit per account enforced in the database (paid API, bots). The developer's own Gemini key goes in `GEMINI_API_KEY`: server only, `.env.local` and later a Vercel secret, never `NEXT_PUBLIC_`. Output is an editable list with one normal search per name; there is no multi-medicine search.
+
+- [x] `/prescription` page (customer area, works at 375 px), linked from the home page's blue search box: upload one photo (JPEG/PNG/WebP, ≤ 5 MB, checked by content like the licence photo)
+- [x] Server action sends the image to Gemini with a fixed JSON response format and returns medicine names (brand or generic, strength if written). **The photo is never stored**: no Storage, no database row, no logging of the image or the names; the page says so
+- [x] Each name is checked against `medicines` (brand or generic, case-insensitive): "In our catalog" or "Not in our catalog"; the customer can edit, remove and add names, and each has a Search link (`/search?q=…`; search then asks for a location as usual)
+- [x] Daily limit: a `prescription_reads` table (customer id and time only, RLS on, no client access) and a function that allows at most **10 reads per customer per Dhaka day**; a clear message when it is reached
+- [ ] Errors: no key configured → "Prescription reading isn't available right now"; unreadable photo or no medicines found → say so and offer typing names; Gemini failure or timeout → generic retry message, never raw API text — _no-key, nothing-found and limit paths are in the code; only the limit and Gemini fallback (503/504 → next model) were observed_
+- [x] Not medical advice: the page says to check the list against the prescription; nothing is reserved automatically
+
+**Done when:** a signed-in customer uploads a test prescription image on the live site, sees the medicine names, edits the list and searches one; a signed-out visitor is asked to sign in; a pharmacist cannot use it; the 11th read in a day is refused. — _Met locally 24 Nov (verify-s1-browser 6/6, one real Gemini read in 8 s). **Live site not done:** needs `GEMINI_API_KEY` in Vercel (developer decision) and a merge._
