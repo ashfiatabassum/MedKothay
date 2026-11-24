@@ -11,11 +11,13 @@
     "verify:w1:browser": "node scripts/verify-w1-browser.mjs",
     "verify:w1:decisions": "node scripts/verify-w1-decisions-browser.mjs",
     "verify:w23:browser": "node scripts/verify-w23-browser.mjs",
+    "verify:s1:browser": "node scripts/verify-s1-browser.mjs",
     "verify:r1": "node --experimental-vm-modules scripts/verify-r1.mjs",
     "verify:r1:browser": "node scripts/verify-r1-browser.mjs"
   },
   "dependencies": {
     "@base-ui/react": "^1.9.0",
+    "@google/genai": "2.32.0",
     "@supabase/ssr": "0.12.7",
     "@supabase/supabase-js": "2.119.0",
     "class-variance-authority": "^0.7.1",
