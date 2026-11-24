@@ -164,6 +164,40 @@ try {
     "customer reads a fictional prescription: Napa, Seclo, Fexo found and in the catalog",
   );
 
+  // A large phone-size photo is shrunk in the browser before upload (code
+  // review: the platform rejects bodies above ~4.5 MB). No Gemini call.
+  const bigPath = path.join(os.tmpdir(), `s1-big-${run}.png`);
+  const noise = await browser.newPage({
+    viewport: { width: 1800, height: 1800 },
+  });
+  await noise.setContent(
+    `<canvas id="c" width="1800" height="1800"></canvas><script>
+      const c = document.getElementById("c").getContext("2d");
+      const img = c.createImageData(1800, 1800);
+      for (let i = 0; i < img.data.length; i++) img.data[i] = Math.random() * 255;
+      c.putImageData(img, 0, 0);</script>`,
+  );
+  await noise.screenshot({ path: bigPath });
+  await noise.close();
+  const bigBytes = (await fs.stat(bigPath)).size;
+  const reader = await browser.newPage();
+  await signIn(reader, customer.email);
+  await reader.goto(`${base}/prescription`);
+  await reader.getByLabel("Prescription photo").setInputFiles(bigPath);
+  await reader.getByRole("button", { name: "Read prescription" }).waitFor();
+  const sent = await reader
+    .getByLabel("Prescription photo")
+    .evaluate((el) => ({ size: el.files[0].size, type: el.files[0].type }));
+  await reader.close();
+  await fs.rm(bigPath, { force: true });
+  assert.ok(bigBytes > 4.5 * 1024 * 1024, `test image only ${bigBytes} bytes`);
+  assert.equal(sent.type, "image/jpeg");
+  assert.ok(sent.size < 4 * 1024 * 1024, `still ${sent.size} bytes`);
+  console.log(
+    `  shrunk ${(bigBytes / 1048576).toFixed(1)} MB → ${(sent.size / 1048576).toFixed(1)} MB`,
+  );
+  pass("a large photo is shrunk below the upload limit in the browser");
+
   // Edit the list: remove one, add one, and search a name.
   const before = await page.locator('input[id^="rx-name-"]').count();
   await page.getByRole("button", { name: "Remove medicine 3" }).click();
@@ -215,6 +249,44 @@ try {
   assert.equal(after.data.length, 10, "a refused read is not counted");
   pass("the 11th read of the day is refused with a clear message");
   await ctx.close();
+
+  // Global cap (migration 16): once 200 reads were made today in total, a
+  // fresh customer is refused too. Filled with a second test customer's rows;
+  // assumes no other real reads today beyond these fixtures. No Gemini call.
+  const filler = await makeUser("filler", "customer");
+  const { count: today } = await service
+    .from("prescription_reads")
+    .select("id", { count: "exact", head: true })
+    // Midnight today in Dhaka (UTC+6), as the database counts it.
+    .gte(
+      "created_at",
+      `${new Date(Date.now() + 6 * 3_600_000).toISOString().slice(0, 10)}T00:00:00+06:00`,
+    );
+  const missing = Math.max(0, 200 - today);
+  assert.equal(
+    (
+      await service
+        .from("prescription_reads")
+        .insert(
+          Array.from({ length: missing }, () => ({ customer_id: filler.id })),
+        )
+    ).error,
+    null,
+  );
+  const fresh = await makeUser("fresh", "customer");
+  const freshApi = client();
+  await freshApi.auth.signInWithPassword({ email: fresh.email, password });
+  const capped = await freshApi.rpc("claim_prescription_read");
+  assert.equal(capped.error, null);
+  assert.equal(capped.data.status, "busy");
+  const freshRows = await service
+    .from("prescription_reads")
+    .select("id")
+    .eq("customer_id", fresh.id);
+  assert.equal(freshRows.data.length, 0, "a capped claim is not counted");
+  pass(
+    "the global daily cap refuses a fresh customer once 200 reads were made",
+  );
 } finally {
   if (browser) await browser.close();
   await fs.rm(imagePath, { force: true });

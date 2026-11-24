@@ -8,6 +8,9 @@ import { getCurrentUser } from "@/lib/data/session";
 import { PrescriptionReader } from "./prescription-reader";
 
 export const metadata = { title: "Search from a prescription" };
+// Covers this page's server action: a read may try up to 3 models within a
+// 25 s budget, so the platform default must not cut it off (code review).
+export const maxDuration = 60;
 
 const TITLE = "Search from a prescription";
 

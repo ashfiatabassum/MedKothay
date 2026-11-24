@@ -12,6 +12,36 @@ import { cn } from "@/lib/utils";
 import { readPrescriptionAction } from "./actions";
 
 const MAX_ROWS = 20;
+// Shrink photos above 1.5 MB; refuse anything still above 4 MB, safely under
+// the platform's ~4.5 MB request limit (the server still checks ≤ 5 MB).
+const SHRINK_ABOVE_BYTES = 1.5 * 1024 * 1024;
+const UPLOAD_MAX_BYTES = 4 * 1024 * 1024;
+const MAX_SIDE_PX = 2000;
+const TOO_BIG =
+  "This photo is too large to send. Take it again with a lower camera resolution, or crop it.";
+
+/** Longest side at most MAX_SIDE_PX, re-saved as JPEG. */
+async function shrink(file) {
+  const bitmap = await createImageBitmap(file);
+  const scale = Math.min(
+    1,
+    MAX_SIDE_PX / Math.max(bitmap.width, bitmap.height),
+  );
+  const canvas = document.createElement("canvas");
+  canvas.width = Math.round(bitmap.width * scale);
+  canvas.height = Math.round(bitmap.height * scale);
+  canvas.getContext("2d").drawImage(bitmap, 0, 0, canvas.width, canvas.height);
+  bitmap.close();
+  const blob = await new Promise((resolve, reject) =>
+    canvas.toBlob(
+      (b) => (b ? resolve(b) : reject(new Error("toBlob"))),
+      "image/jpeg",
+      0.85,
+    ),
+  );
+  const name = file.name.replace(/\.[^.]+$/, "") + ".jpg";
+  return new File([blob], name, { type: "image/jpeg" });
+}
 let nextKey = 0;
 const row = (m) => ({ key: nextKey++, ...m });
 
@@ -38,7 +68,8 @@ export function PrescriptionReader() {
   });
   const [rows, setRows] = useState([]);
   const [shownState, setShownState] = useState(state);
-  const [fileName, setFileName] = useState(null);
+  const [photo, setPhoto] = useState({ preparing: false, error: null });
+  const [focusKey, setFocusKey] = useState(null);
   const listRef = useRef(null);
 
   // A new successful read replaces the list (adjusted during render, as React
@@ -56,11 +87,43 @@ export function PrescriptionReader() {
     setRows((rs) =>
       rs.map((r) => (r.key === key ? { key, name, strength: "" } : r)),
     );
-  const remove = (key) => setRows((rs) => rs.filter((r) => r.key !== key));
-  const add = () =>
-    setRows((rs) =>
-      rs.length >= MAX_ROWS ? rs : [...rs, row({ name: "", strength: "" })],
-    );
+  const remove = (key) => {
+    setRows((rs) => rs.filter((r) => r.key !== key));
+    // The focused button is gone; keep keyboard users in the list.
+    listRef.current?.focus();
+  };
+  const add = () => {
+    if (rows.length >= MAX_ROWS) return;
+    const added = row({ name: "", strength: "" });
+    setRows((rs) => [...rs, added]);
+    setFocusKey(added.key);
+  };
+
+  // Phone photos are often 3–8 MB, above the hosting platform's ~4.5 MB
+  // request limit (code review). Shrink big ones in the browser before upload.
+  async function preparePhoto(input) {
+    const file = input.files?.[0];
+    if (!file) return setPhoto({ preparing: false, error: null });
+    setPhoto({ preparing: true, error: null });
+    try {
+      if (file.size > SHRINK_ABOVE_BYTES) {
+        const small = await shrink(file);
+        const dt = new DataTransfer();
+        dt.items.add(small);
+        input.files = dt.files;
+      }
+      const size = input.files[0].size;
+      setPhoto({
+        preparing: false,
+        error: size > UPLOAD_MAX_BYTES ? TOO_BIG : null,
+      });
+    } catch {
+      setPhoto({
+        preparing: false,
+        error: file.size > UPLOAD_MAX_BYTES ? TOO_BIG : null,
+      });
+    }
+  }
 
   return (
     <div className="space-y-6">
@@ -71,8 +134,10 @@ export function PrescriptionReader() {
         <FormField
           id="rx-photo"
           label="Prescription photo"
-          hint="JPG, PNG or WebP, up to 5 MB. The photo is read once and not stored."
-          error={state.status === "error" ? state.message : null}
+          hint="JPG, PNG or WebP. The photo is sent to Google's Gemini service to read the names; MedKothay does not store it."
+          error={
+            photo.error ?? (state.status === "error" ? state.message : null)
+          }
         >
           {(a) => (
             <input
@@ -84,21 +149,27 @@ export function PrescriptionReader() {
               required
               aria-describedby={a.describedBy}
               aria-invalid={a.invalid || undefined}
-              onChange={(e) => setFileName(e.target.files?.[0]?.name ?? null)}
+              onChange={(e) => preparePhoto(e.target)}
               className="block w-full text-sm file:mr-3 file:h-11 file:rounded-md file:border-0 file:bg-secondary file:px-4 file:text-secondary-foreground"
             />
           )}
         </FormField>
-        {fileName && (
-          <p className="text-xs text-muted-foreground">{fileName}</p>
-        )}
         <Button
           type="submit"
-          disabled={pending}
+          disabled={pending || photo.preparing || Boolean(photo.error)}
           className="h-11 w-full sm:w-auto"
         >
-          {pending ? "Reading the prescription…" : "Read prescription"}
+          {pending
+            ? "Reading the prescription…"
+            : photo.preparing
+              ? "Preparing the photo…"
+              : "Read prescription"}
         </Button>
+        <p role="status" aria-live="polite" className="sr-only">
+          {pending
+            ? "Reading the prescription. This can take up to half a minute."
+            : ""}
+        </p>
       </form>
 
       {rows.length > 0 || state.status === "read" ? (
@@ -119,6 +190,11 @@ export function PrescriptionReader() {
                 ` ${state.remaining} ${state.remaining === 1 ? "read" : "reads"} left today.`}
             </p>
           </div>
+          {rows.length === 0 && (
+            <p className="rounded-lg border border-dashed p-3 text-sm text-muted-foreground">
+              No medicines in the list. Add one, or read another photo.
+            </p>
+          )}
           <ul className="space-y-2">
             {rows.map((r, i) => {
               const q = r.name.trim();
@@ -137,6 +213,7 @@ export function PrescriptionReader() {
                           id={`rx-name-${r.key}`}
                           value={r.name}
                           maxLength={60}
+                          autoFocus={r.key === focusKey}
                           onChange={(e) => edit(r.key, e.target.value)}
                           {...a}
                         />
